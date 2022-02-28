@@ -1,0 +1,182 @@
+﻿@page "/Vendor"
+@using Model
+@using Interfaces
+@inject IVendorService VendorService
+@inject ICountryService CountryService
+
+@attribute [Authorize]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Proveedores</b></div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData"  AllowExcelExport="true">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Vendor"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams">
+                            <HeaderTemplate>
+                                @{
+                                    var vend = (context as Vendor);
+                                }
+                                <span>Detalle de Proveedor: @(vend.proveedor)</span>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var vend = (context as Vendor);
+                                }
+                                <div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+
+                                            <SfNumericTextBox @bind-Value="@(vend.id_proveedor)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-9">
+
+                                            <SfTextBox @bind-Value="@(vend.proveedor)" Enabled="true" Placeholder="Proveedor" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-12">
+
+                                            <SfTextBox @bind-Value="@(vend.descripcion)" Enabled="true" Placeholder="Descripción" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+
+                                            <SfDropDownList DataSource="@countries"
+                                                            TItem="Country"
+                                                            TValue="Int32"
+                                                            @bind-Value="@(vend.id_pais)"
+                                                            Placeholder="Pais"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Value="id_pais" Text="pais"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+
+
+                                    </div>
+
+                                </div>
+                            </Template>
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Vendor.id_proveedor) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+
+                            <GridColumn Field=@nameof(Vendor.proveedor) HeaderText="Proveedor" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Vendor.descripcion) HeaderText="Descripción" Width="20"></GridColumn>
+
+                            <GridColumn Field=@nameof(Vendor.pais) HeaderText="Pais" Width="30"></GridColumn>
+
+
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+    //public IEnumerable<Vendor> clients { get; set; }
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+    public string ErrorDetails = "";
+
+    public IEnumerable<Vendor> GridData { get; set; }
+    public IEnumerable<Country> countries { get; set; }
+  
+
+
+
+
+    SfGrid<Vendor> Grid { get; set; }
+
+    private DialogSettings DialogParams = new DialogSettings { Width = "850px", EnableResize = true, AllowDragging = true };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await VendorService.GetAllVendors();
+            countries = await CountryService.GetAllCountries();
+           
+
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener Proveedores: " + ex.Message;
+        }
+    }
+
+
+
+    private async Task OnBeginHandler(ActionEventArgs<Vendor> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveVendor((Vendor)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteVendor(((Vendor)Args.Data).id_proveedor);
+        }
+
+        return;
+    }
+
+    protected async Task SaveVendor(Vendor vendor)
+    {
+        await VendorService.SaveVendor(vendor);
+        Grid.Refresh();
+
+    }
+
+    protected async Task DeleteVendor(int id)
+    {
+        await VendorService.DeleteVendor(id);
+        Grid.Refresh();
+
+    }
+
+
+}
+
+

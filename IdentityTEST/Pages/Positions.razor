@@ -1,0 +1,115 @@
+﻿@page "/Position"
+@using Model
+@using Interfaces
+@inject IPositionService PositionService
+@inject IAreaService AreaService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.DropDowns
+@inject NavigationManager NavigationManager
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Posiciones</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Position"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Position.id_cargo) HeaderText="ID" TextAlign="TextAlign.Center" Width="20" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Position.area) HeaderText="Area" Width="30" EditType="EditType.DropDownEdit">
+                                <EditTemplate>
+                                    <SfDropDownList TValue="Int32" TItem="Area" @bind-Value="@((context as Position).id_area)" Placeholder="Selecccione Area" DataSource="@areas" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                        <DropDownListFieldSettings Text="area" Value="id_area"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(Position.cargo) HeaderText="Cargo" Width="50"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Position> GridData { get; set; }
+    public IEnumerable<Area> areas { get; set; }
+
+    SfGrid<Position> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await PositionService.GetAllPositions();
+            areas = await AreaService.GetAllAreas();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener cargos: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Position> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SavePosition((Position)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeletePosition(((Position)Args.Data).id_cargo);
+        }
+
+        return;
+    }
+
+    protected async Task SavePosition(Position position)
+    {
+        await PositionService.SavePosition(position);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected async Task DeletePosition(int id)
+    {
+        await PositionService.DeletePosition(id);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected void ReloadPage()
+    {
+        NavigationManager.NavigateTo("/Position", true);
+    }
+}

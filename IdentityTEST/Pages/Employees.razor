@@ -1,0 +1,204 @@
+﻿@page "/Employee"
+@using Syncfusion.Blazor.Grids
+@using Model
+@using Interfaces
+@inject IEmployeeService EmployeeService
+@inject IPositionService PositionService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.Inputs
+@using System.IO
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+
+<div class="container-fluid">
+    <p>@Message</p>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Funcionarios</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfButton OnClick="ExcelExport" Content="Excel Export"></SfButton>
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" Toolbar="@ToolbarItems" AllowSorting="true" DataSource="@GridData" AllowExcelExport="true" ShowColumnChooser="true">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" OnActionComplete="ActionCompletedHandler" TValue="Employee"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog">
+                            <HeaderTemplate>
+                                @{
+                                    var emp = (context as Employee);
+                                }
+                              
+
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var emp = (context as Employee);
+
+                                }
+                                <div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(emp.id_funcionario)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-7">
+                                            <SfTextBox @bind-Value="@(emp.usuario)" Enabled="true" Placeholder="usuario" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row">
+
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(emp.nombres)" Enabled="true" Placeholder="Nombres" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(emp.apellidos)" Enabled="true" Placeholder="Apellidos" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <SfDropDownList DataSource="@positions"
+                                                            TItem="Position"
+                                                            TValue="Int32"
+                                                            @bind-Value="@(emp.id_cargo)"
+                                                            Placeholder="Cargo"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Value="id_cargo" Text="cargo">
+
+                                                </DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(emp.correo)" Enabled="true" Placeholder="Correo" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+
+
+                                    </div>
+                                </div>
+                            </Template>
+
+
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Employee.id_funcionario) HeaderText="ID" TextAlign="TextAlign.Center" Width="10" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Employee.nombres) HeaderText="Nombres" Width="40"></GridColumn>
+                            <GridColumn Field=@nameof(Employee.apellidos) HeaderText="Apellidos" Width="40"></GridColumn>
+                            <GridColumn Field=@nameof(Employee.usuario) HeaderText="Usuario" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Employee.correo) HeaderText="Correo" Width="30"></GridColumn>
+                            <GridColumn Field=@nameof(Employee.cargo) HeaderText="Cargo" Width="20"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+    //public string[] ToolbarItems = new string[] { "Edit", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Employee> GridData { get; set; }
+    public IEnumerable<Position> positions { get; set; }
+
+    SfGrid<Employee> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await EmployeeService.GetAllEmployees();
+            positions = await PositionService.GetAllPositions();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener funcionarios: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Employee> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveEmployee((Employee)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteEmployee(((Employee)Args.Data).id_funcionario);
+        }
+
+        return;
+    }
+
+
+    private async Task ActionCompletedHandler(ActionEventArgs<Employee> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save || Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            GridData = await EmployeeService.GetAllEmployees();
+            Grid.Refresh();
+        }
+
+    }
+
+    protected async Task SaveEmployee(Employee nationality)
+    {
+        await EmployeeService.SaveEmployee(nationality);
+        Grid.Refresh();
+    }
+
+    protected async Task DeleteEmployee(int id)
+    {
+        await EmployeeService.DeleteEmployee(id);
+        Grid.Refresh();
+    }
+
+    public async Task ExcelExport()
+    {
+        ExcelExportProperties ExportProperties = new ExcelExportProperties();
+        ExportProperties.IncludeHiddenColumn = true;
+
+
+        ExcelTheme Theme = new ExcelTheme();
+        ExcelStyle ThemeStyle = new ExcelStyle()
+        {
+            FontName = "Segoe UI",
+            FontColor = "#666666",
+            FontSize = 9
+        };
+        Theme.Header = ThemeStyle;
+        Theme.Record = ThemeStyle;
+        Theme.Caption = ThemeStyle;
+
+        ExportProperties.Theme = Theme;
+
+
+
+        await this.Grid.ExcelExport(ExportProperties);
+    }
+
+
+}
+

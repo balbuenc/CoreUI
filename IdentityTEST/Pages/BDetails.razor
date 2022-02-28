@@ -1,0 +1,1057 @@
+﻿@page "/BudgetDetails/{BudgetID}"
+
+@using Model
+@using Interfaces
+@using CoreERP.UI.Tools
+
+@inject IBudgetDetailsService BudgetDetailsService
+@inject IProductService ProductService
+@inject IDiscountService DiscountService
+@inject IBudgetService BudgetService
+@inject IPrintService PrintService
+@inject IStockService StockService
+@inject IQuotaService QuotaService
+@inject ISaleService SaleService
+@inject IDiscountLimitService DiscountLimitService
+
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor httpContextAccessor
+@inject NavigationManager NavigationManager
+
+
+@attribute [Authorize(Roles = "Administrators, Sales")]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+
+
+@using System.IO;
+@using System.Text;
+
+@inject IJSRuntime Js
+
+
+<style>
+    .e-custom {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+    }
+
+        .e-custom, .e-custom:hover, .e-custom:focus, .e-custom:active {
+            background-color: #ff6e40;
+            color: #fff;
+        }
+
+    .e-require {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+        background-color: lawngreen
+    }
+
+    .e-reverse {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+        background-color: lightgray
+    }
+
+    .e-require, .e-require:hover {
+        color: white;
+        background-color: red;
+    }
+
+    .e-approve, .e-approve:hover, .e-approve:focus, .e-approve:active {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+        background-color: seagreen;
+        color: white
+    }
+
+    .head, .item {
+        display: table;
+        width: 100%;
+        margin: auto;
+    }
+
+    .head {
+        height: 40px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .name, .city {
+        display: table-cell;
+        vertical-align: middle;
+        width: 50%;
+    }
+
+    .head .name {
+        text-indent: 16px;
+    }
+
+    .head .city {
+        text-indent: 10px;
+    }
+
+    a, a:hover, .highcontrast #dialog a, .highcontrast #dialog a:hover {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .e-btn-icon.e-icons.e-ok-icon.e-icon-left:before {
+        content: '\e7ff';
+    }
+
+    .e-btn-icon.e-icons.e-close-icon.e-icon-left:before {
+        content: '\e825';
+    }
+
+    .e-grid .e-headercelldiv,
+    .e-grid .e-rowcell,
+    .e-grid .e-summarycell,
+    .e-grid .e-row .e-input-group .e-input.e-field {
+        font-size: 10px;
+    }
+</style>
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-md-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="jumbotron py-1">
+                        <div class="d-flex align-items-stretch flex-column flex-md-row">
+                            <img src="@imagePath" style="object-fit: contain;" width="154">
+                            <div class="ml-4 d-sm-none d-md-block"></div>
+                            <div class="mt-2 d-sm-block d-md-none"></div>
+                            <div class="flex-fill align-self-md-center">
+                                <h1 class="h5">
+                                    <b>
+                                        @Cliente
+                                    </b>
+                                </h1>
+                                <h2 class="h6 text-truncate"><b>Vendedor:</b> @Vendedor</h2>
+                            </div>
+                        </div>
+
+                        <hr class="my-2">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <p class="m-0"><b>Nro.:</b> @NroPresupuesto</p>
+                                    </td>
+                                    <td>
+                                        <p class="m-0"><b>Estado:</b> @Estado</p>
+                                    </td>
+                                    <td>
+                                        <p class="m-0"><b>Fecha:</b> @Fecha</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p class="m-0"><b>Moneda:</b> @Moneda</p>
+                                    </td>
+                                    <td>
+                                        <p class="m-0"><b>Cotizacion:</b>@Cotizacion</p>
+                                    </td>
+                                    <td>
+                                        <p class="m-0"><b>Condición:</b>@Condicion</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p class="m-0"><b>Exento:</b>@Exento</p>
+                                    </td>
+                                    <td>
+                                        <p class="m-0"><b>Motivo:</b>@Motivo</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                        <small class="mb-0">@Titulo</small>
+
+                    </div>
+                </div>
+                <div class="col-md-4">
+
+                    <div class="row">
+                        <SfGrid ID="discountLimits" @ref="GridDiscounts" AllowSorting="true" DataSource="@discountLimits">
+                            <GridEditSettings AllowAdding="true" AllowEditing="true" Mode="EditMode.Normal"></GridEditSettings>
+                            <GridEvents OnActionBegin="OnDiscountLimitsBeginHandler" TValue="DiscountLimit"></GridEvents>
+                            <GridColumns>
+                                <GridColumn Field=@nameof(DiscountLimit.id_limite_descuento) HeaderText="ID" Visible="false" TextAlign="TextAlign.Center" Width="10" IsPrimaryKey="true">
+                                    <EditTemplate>
+                                        <SfNumericTextBox @bind-Value="@((context as DiscountLimit).id_limite_descuento)" Enabled="false" Placeholder="Límite actual" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    </EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(DiscountLimit.marca) HeaderText="Marca" Width="10">
+                                    <EditTemplate>
+                                        <SfTextBox @bind-Value="@((context as DiscountLimit).marca)" Enabled="false" Placeholder="Marca" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                    </EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(DiscountLimit.limite) HeaderText="Límite" Width="10">
+                                    <EditTemplate>
+                                        <SfNumericTextBox @bind-Value="@((context as DiscountLimit).limite)" Enabled="false" Placeholder="Límite" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    </EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(DiscountLimit.limite_actual) HeaderText="%Desc." Width="10">
+                                    <EditTemplate>
+                                        <SfNumericTextBox @bind-Value="@((context as DiscountLimit).limite_actual)" Enabled="true" Placeholder="Límite actual" FloatLabelType="FloatLabelType.Always"> </SfNumericTextBox>
+                                    </EditTemplate>
+                                </GridColumn>
+
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+
+                </div>
+            </div>
+            <div class="row" style="padding:2px 2px 2px 2px">
+                <div class="col-md-12" style="vertical-align:middle;">
+                    @if (!this.IsPrintable)
+                    {
+                        <SfButton CssClass="e-custom" IconPosition="IconPosition.Right" OnClick="Print">Imprimir presupuesto</SfButton>
+                    }
+                    @if (Estado.ToUpper() == "GENERADO")
+                    {
+                        <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="RequireAutorization">Solicitar autorización</SfButton>
+                    }
+                    @if (Estado.ToUpper() == "PENDIENTE" && UserPermissions.CanAuthorize)
+                    {
+                        <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="Autorization">Aprobar presupuesto</SfButton>
+                    }
+                    @if (Estado.ToUpper() == "APROBADO")
+                    {
+                        if (Motivo.ToUpper() != "MUESTRA")
+                        {
+                            <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="CheckInvoiceNumber">Facturar</SfButton>
+                        }
+
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="SpecialRemission">Generar Remisión esp.</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="Remission">Generar remisión</SfButton>
+                    }
+                    @if (Estado.ToUpper() == "FACTURADO")
+                    {
+                        <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="PrintInvoice">Imprimir factura</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="Remission">Generar remisión</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="SpecialRemission">Generar Remisión esp.</SfButton>
+
+                    }
+                    @if (Estado.ToUpper() == "REMITIDO")
+                    {
+                        <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="PrintInvoice">Imprimir factura</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="PrintRemission">Imprimir remisión</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="PrintSpecialRemission">Imprimir remisión esp.</SfButton>
+                        @*<SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="CheckInvoiceNumber">Facturar</SfButton>*@
+                    }
+                    @if (Estado.ToUpper() == "PRESTAMO")
+                    {
+                        <SfButton CssClass="e-require" IconPosition="IconPosition.Right" OnClick="PrintInvoice">Imprimir factura</SfButton>
+                        <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="PrintSpecialRemission">Imprimir remisión esp.</SfButton>
+                        <SfButton CssClass="e-reverse" IconPosition="IconPosition.Right" OnClick="ReverseStock">Devolución</SfButton>
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8" style="vertical-align:middle">
+                    <h6><b>Detalles del presupuesto</b></h6>
+                </div>
+                <div class="col-md-4" style="vertical-align:middle; text-align:right">
+                    <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="ShowSearchDialog">Agregar producto</SfButton>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <SfGrid ID="Grid" @ref="Grid" Width="100%" DataSource="@GridData" Toolbar="@ToolbarItems" AllowTextWrap="true">
+                        <GridEvents OnActionBegin="OnBeginHandler" OnActionComplete="ActionCompletedHandler" TValue="BudgetDetails"></GridEvents>
+                        <GridPageSettings PageSize="@PageSize"></GridPageSettings>
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal">
+                        </GridEditSettings>
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field=@nameof(BudgetDetails.total) Type="AggregateType.Sum" Format="@format">
+                                        <FooterTemplate Context="con">
+                                            @{
+                                                var aggregate = (con as AggregateTemplateContext);
+                                                <div class="row">
+                                                    <div class="col-12 text-right">
+                                                        <b>@aggregate.Sum </b>
+                                                    </div>
+
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+                        <SfToolbar>
+                            <ToolbarItems>
+                                <ToolbarItem Type="ItemType.Input">
+                                    <Template>
+                                        <SfCheckBox Label="Modificar P. UNIT." @bind-Checked="isChecked"></SfCheckBox>
+                                    </Template>
+                                </ToolbarItem>
+                            </ToolbarItems>
+                        </SfToolbar>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(BudgetDetails.id_presupuesto_detalle) HeaderText="ID" TextAlign="TextAlign.Center" Width="30" IsPrimaryKey="true">
+                                <EditTemplate>
+                                    <SfNumericTextBox @bind-Value="@((context as BudgetDetails).id_presupuesto_detalle)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"> </SfNumericTextBox>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn HeaderText="Imagen" TextAlign="TextAlign.Center" Width="120">
+                                <Template>
+                                    @{
+                                        var det = (context as BudgetDetails);
+                                        <div class="image">
+                                            <img src="@($"/Images/{det.codigo}.jpg")" alt="@det.codigo" width="100px" />
+                                        </div>
+                                    }
+                                </Template>
+                                <EditTemplate>
+
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(BudgetDetails.codigo) HeaderText="Código" EditType="EditType.DropDownEdit" Width="60">
+                                <EditTemplate>
+                                    <SfTextBox @bind-Value="@((context as BudgetDetails).codigo)" Enabled="false" Placeholder="Código" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(BudgetDetails.producto) HeaderText="Producto" Width="220" AllowGrouping="false">
+                                <EditTemplate>
+                                    <SfTextBox @bind-Value="@((context as BudgetDetails).producto)" Enabled="false" Placeholder="Producto" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </EditTemplate>
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(BudgetDetails.cantidad) HeaderText="Cant." Format="@format" TextAlign="TextAlign.Right" Width="60">
+                                <EditTemplate>
+                                    <SfNumericTextBox @bind-Value="@((context as BudgetDetails).cantidad)" Enabled="true" Placeholder="Cantidad" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                </EditTemplate>
+                            </GridColumn> <GridColumn Field=@nameof(BudgetDetails.precio) HeaderText="Precio" Format="@format" TextAlign="TextAlign.Right" Width="80">
+                                <EditTemplate>
+                                    <SfNumericTextBox @bind-Value="@((context as BudgetDetails).precio)" Enabled="false" Placeholder="Precio" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(BudgetDetails.porcentaje) HeaderText="% Desc." Format="@format" EditType="EditType.DropDownEdit" Width="60">
+                                <EditTemplate>
+                                    @if (isChecked)
+                                    {
+                                        <SfNumericTextBox @bind-Value="@((context as BudgetDetails).porcentaje)" Enabled="false" Placeholder="% Desc." FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    }
+                                    else
+                                    {
+                                        <SfNumericTextBox @bind-Value="@((context as BudgetDetails).porcentaje)" Enabled="true" Placeholder="% Desc." FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    }
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(BudgetDetails.precio_unitario) HeaderText="P. Unitario" Format="@format" TextAlign="TextAlign.Right" Width="80">
+                                <EditTemplate>
+                                    @if (isChecked)
+                                    {
+                                        <SfNumericTextBox @bind-Value="@((context as BudgetDetails).precio_unitario)" Enabled="true" Placeholder="P. Unitario" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    }
+                                    else
+                                    {
+                                        <SfNumericTextBox @bind-Value="@((context as BudgetDetails).precio_unitario)" Enabled="false" Placeholder="P. Unitario" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                    }
+                                </EditTemplate>
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(BudgetDetails.total) HeaderText="Total" Format="@format" TextAlign="TextAlign.Right" Width="80">
+                                <EditTemplate>
+                                    <SfNumericTextBox @bind-Value="@((context as BudgetDetails).total)" Enabled="false" Placeholder="Total" FloatLabelType="FloatLabelType.Always" ShowSpinButton="false"> </SfNumericTextBox>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn HeaderText="Acciones" Width="100">
+                                <GridCommandColumns>
+                                    <GridCommandColumn Type="CommandButtonType.Edit" ButtonOption="@(new CommandButtonOptions() { IconCss = "e-icons e-edit", CssClass = "e-flat" })"></GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Delete" ButtonOption="@(new CommandButtonOptions() { IconCss = "e-icons e-delete", CssClass = "e-flat" })"></GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Save" ButtonOption="@(new CommandButtonOptions() { IconCss = "e-icons e-update", CssClass = "e-flat" })"></GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Cancel" ButtonOption="@(new CommandButtonOptions() { IconCss = "e-icons e-cancel-icon", CssClass = "e-flat" })"></GridCommandColumn>
+                                </GridCommandColumns>
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <SfDialog Width="510px" IsModal="true" @bind-Visible="@IsRepositionVisible">
+        <DialogEvents OnOverlayClick="@OnOverlayclick">
+        </DialogEvents>
+        <DialogTemplates>
+            <Content>
+                <div class="row">
+                    <div class="col-12">
+                        <h5>La devolución se realizó con éxito. </h5>
+                    </div>
+                </div>
+
+            </Content>
+        </DialogTemplates>
+    </SfDialog>
+
+    <SfDialog Width="510px" IsModal="true" @bind-Visible="@IsVisible">
+        <DialogEvents OnOverlayClick="@OnOverlayclick">
+        </DialogEvents>
+        <DialogTemplates>
+            <Content>
+                <div class="row">
+                    <div class="col-12">
+                        <h5>La venta no puede generarse sin un nro. de factura válido. </h5>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <SfTextBox Placeholder="Nro. Factura" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@NroPresupuesto"></SfTextBox>
+                    </div>
+                </div>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="OK" IsPrimary="true" OnClick="@OnConfirmation" />
+            <DialogButton Content="Cancel" IsPrimary="true" OnClick="@OnOverlayclick" />
+        </DialogButtons>
+    </SfDialog>
+
+    <SfDialog Width="1024px" Height="660px" IsModal="true" @bind-Visible="@IsSearchVisible" ShowCloseIcon="true">
+        <DialogEvents OnOverlayClick="@OnOverlayclick">
+        </DialogEvents>
+
+        <DialogTemplates>
+            <Header>
+                <h1><b>Buscador de productos y servicios.</b></h1>
+            </Header>
+            <Content>
+                <ItemSearchComponent @ref="@itemSearch"></ItemSearchComponent>
+            </Content>
+            <FooterTemplate>
+                <SfButton CssClass="e-success e-flat" @onclick="@OnItemAdded">
+                    <span class="e-btn-icon e-icons e-ok-icon e-icon-left"></span>
+                    Agregar
+                </SfButton>
+                <SfButton CssClass="e-flat" @onclick="@OnOverlayclick">
+                    <span class="e-btn-icon e-icons e-close-icon e-icon-left"></span>
+                    Cancelar
+                </SfButton>
+            </FooterTemplate>
+        </DialogTemplates>
+
+    </SfDialog>
+
+    <SfDialog Width="400px" Height="200px" IsModal="true" @bind-Visible="@IsMessageVisible" ShowCloseIcon="true">
+        <DialogEvents OnOverlayClick="@OnOverlayclick">
+        </DialogEvents>
+
+        <DialogTemplates>
+            <Header>
+                <h1><b>Mensaje del sistema.</b></h1>
+            </Header>
+            <Content>
+                <div class="col-12">
+                    <b>@Message</b>
+                </div>
+            </Content>
+
+        </DialogTemplates>
+
+    </SfDialog>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public string BudgetID { get; set; }
+
+    [Parameter]
+    public bool IsPrintable { get; set; } = false;
+
+    public bool IsSearchVisible { get; set; } = false;
+    public bool IsMessageVisible { get; set; } = false;
+    public bool IsRepositionVisible { get; set; } = false;
+
+
+
+    public bool isChecked = true;
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Search" };
+    public int PageSize = 100;
+    public string format;
+
+    private SystemTools erpTools;
+    private String mainURL;
+    private String mainLogo;
+    private string imagePath;
+
+    public string ErrorDetails = "";
+    public string Titulo = "";
+    public string Cliente = "";
+    public string Fecha = "";
+    public string NroPresupuesto = "";
+    public string Moneda = "";
+    public string Cotizacion = "";
+    public string Estado = "";
+    public string Vendedor = "";
+    public string Condicion = "";
+    public string Exento = "";
+    public string Motivo = "";
+
+    public IEnumerable<BudgetDetails> GridData { get; set; }
+
+
+    public IEnumerable<Discount> discounts { get; set; }
+    public List<DiscountLimit> discountLimits = new List<DiscountLimit>();
+
+    public Budget header { get; set; }
+
+    SfGrid<BudgetDetails> Grid { get; set; }
+    SfGrid<DiscountLimit> GridDiscounts { get; set; }
+
+    ItemSearchComponent itemSearch { get; set; }
+
+    private bool IsVisible { get; set; } = false;
+
+
+    //Authorization UserPermissions
+    AuthorizationMatrix UserPermissions = new AuthorizationMatrix();
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private async Task AuthorizeUser(AuthorizationMatrix m)
+    {
+        var user = (await authenticationStateTask).User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            m.CanView = false;
+            m.CanViewOnlyOwned = true;
+            m.CanEdit = false;
+            m.CanCreate = false;
+            m.CanDelete = false;
+        }
+
+        if (user.IsInRole("Administrators"))
+        {
+            // Perform an action only available to users in the 'admin' role.
+            m.CanView = true;
+            m.CanViewOnlyOwned = false;
+            m.CanEdit = true;
+            m.CanCreate = false;
+            m.CanDelete = true;
+            m.CanAuthorize = true;
+        }
+        else if (user.IsInRole("Sales"))
+        {
+            m.CanView = true;
+            m.CanViewOnlyOwned = true;
+            m.CanEdit = true;
+            m.CanCreate = true;
+            m.CanDelete = false;
+            m.CanAuthorize = false;
+        }
+    }
+
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    private void OnOverlayclick(MouseEventArgs arg)
+    {
+        this.IsVisible = false;
+        this.IsSearchVisible = false;
+        this.IsRepositionVisible = false;
+    }
+
+    private async void OnItemAdded()
+    {
+        List<Product> addedItems = itemSearch.products;
+        BudgetDetails b = new BudgetDetails();
+        Product product;
+
+
+        //Inserto los productos seleccionados
+        foreach (Product p in addedItems)
+        {
+            //Obtengo el detalle del producto a ser insertado
+            product = await ProductService.GetProductDetails(p.id_producto);
+
+            //Configuro el detalle del presupuesto
+            b.id_presupuesto = header.id_presupuesto;
+            b.id_descuento = 1;
+            b.cantidad = 1;
+            b.total = product.precio;
+
+            b.id_producto = product.id_producto;
+            b.precio = product.precio;
+
+
+            await BudgetDetailsService.SaveBudgetDetails(b);
+
+
+        }
+
+        //Cierro el dialogo de busqueda
+        IsSearchVisible = false;
+
+        int id = Int32.Parse(BudgetID);
+        GridData = await BudgetDetailsService.GetBudgetDetails(id);
+
+        Grid.Refresh();
+
+        discountLimits = (await DiscountLimitService.GetDiscountLimitsByBudgetID(Int32.Parse(BudgetID))).ToList();
+        GridDiscounts.Refresh();
+    }
+
+    private async void OnConfirmation()
+    {
+        header.nro_presupuesto = NroPresupuesto;
+        await BudgetService.SaveBudget(header);
+        CheckInvoiceNumber();
+    }
+
+    protected async Task Print()
+    {
+        try
+        {
+
+            //Deprecated call Report API
+            //byte[] r;
+            //r = await BudgetDetailsService.GetBudgetPDF(Convert.ToInt32(BudgetID));
+
+            //String filename;
+            //filename = String.Concat("Prespuesto", BudgetID, ".pdf");
+
+            //await Js.SaveAs(filename, r.ToArray());
+
+
+            //Call Reporting Service WSL
+            String route;
+            route = String.Concat("BudgetReport/", BudgetID);
+
+            await Js.InvokeAsync<object>("open", route, "_blank");
+
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+    protected void ShowSearchDialog()
+    {
+        itemSearch.products.Clear();
+        itemSearch.SelectedGrid.Refresh();
+        IsSearchVisible = true;
+    }
+
+    protected void PrintInvoice()
+    {
+        try
+        {
+            //byte[] r;
+            //r = await PrintService.GetInvoicePDF(Convert.ToInt32(BudgetID));
+
+            //String filename;
+            //filename = String.Concat("Factura", BudgetID, ".pdf");
+
+            //await Js.SaveAs(filename, r.ToArray());
+
+            //Call Reporting Service WSL
+            String route;
+            route = String.Concat("InvoiceReport/", BudgetID);
+
+            Js.InvokeAsync<object>("open", route, "_blank");
+
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+    protected void PrintRemission()
+    {
+        try
+        {
+            //byte[] r;
+            //r = await PrintService.GetRemissionPDF(Convert.ToInt32(BudgetID));
+
+            //String filename;
+            //filename = String.Concat("Remision", BudgetID, ".pdf");
+
+            //await Js.SaveAs(filename, r.ToArray());
+
+            //Call Reporting Service WSL
+            String route;
+            route = String.Concat("RemissionReport/", BudgetID);
+
+            Js.InvokeAsync<object>("open", route, "_blank");
+
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+
+    protected void PrintSpecialRemission()
+    {
+        try
+        {
+            //byte[] r;
+            //r = await PrintService.GetSpecialRemissionPDF(Convert.ToInt32(BudgetID));
+
+            //String filename;
+            //filename = String.Concat("RemisionEspecial", BudgetID, ".pdf");
+
+            //await Js.SaveAs(filename, r.ToArray());
+
+            //Call Reporting Service WSL
+            String route;
+            route = String.Concat("SpecialRemissionReport/", BudgetID);
+
+            Js.InvokeAsync<object>("open", route, "_blank");
+
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+    protected async Task RequireAutorization()
+    {
+        header.estado = "PENDIENTE";
+        await BudgetService.SaveBudget(header);
+        Navigate();
+
+    }
+
+    protected async Task Autorization()
+    {
+        header.estado = "APROBADO";
+        await BudgetService.SaveBudget(header);
+        Navigate();
+    }
+
+    protected async void CheckInvoiceNumber()
+    {
+        if (header.nro_presupuesto == null || header.nro_presupuesto == "")
+        {
+            OpenDialog();
+            return;
+        }
+        else
+        {
+            await Invoice();
+        }
+
+    }
+
+
+
+    protected async Task Invoice()
+    {
+        try
+        {
+            //create Sale based on Budget
+            Sale s;
+            s = await SaleService.SaveSale(header);
+
+
+            // Generate Quota for the Sale
+            await QuotaService.SaveQuota(s);
+
+
+            if (header.motivo == "VENTA")
+            {
+                //Discount Stock of products
+                await ModifyStock();
+            }
+
+            //Save Budget header
+            header.estado = "FACTURADO";
+            await BudgetService.SaveBudget(header);
+
+
+            Navigate();
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+    protected async Task SpecialRemission()
+    {
+        if (header.motivo == "MUESTRA")
+        {
+            header.estado = "PRESTAMO";
+        }
+        else if (header.motivo == "VENTA" || header.motivo == "MONTAJE")
+        {
+            header.estado = "REMITIDO";
+        }
+
+        await BudgetService.SaveBudget(header);
+
+        if (header.motivo == "VENTA" || header.motivo == "MUESTRA")
+        {
+            await ModifyStock();
+        }
+
+
+        Navigate();
+    }
+
+    protected async Task ModifyStock()
+    {
+        Stock s;
+        for (int i = 0; i < GridData.Count(); i++)
+        {
+            BudgetDetails item = GridData.ElementAt(i);
+            s = await StockService.GetStockDetails(item.id_producto);
+
+            if (s.id_stock == 0)
+            {
+                continue;
+            }
+
+            s.cantidad = s.cantidad - item.cantidad;
+            try
+            {
+                await StockService.SaveStock(s);
+            }
+            catch (Exception ex)
+            {
+                continue;
+            }
+
+        }
+    }
+
+    protected async Task ReverseStock()
+    {
+        Stock s;
+        for (int i = 0; i < GridData.Count(); i++)
+        {
+            BudgetDetails item = GridData.ElementAt(i);
+            s = await StockService.GetStockDetails(item.id_producto);
+
+            s.cantidad = s.cantidad + item.cantidad;
+            await StockService.SaveStock(s);
+
+        }
+
+        IsRepositionVisible = true;
+    }
+
+
+    protected async Task Remission()
+    {
+        header.estado = "REMITIDO";
+        await BudgetService.SaveBudget(header);
+
+        Navigate();
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            int id = Int32.Parse(BudgetID);
+
+            await AuthorizeUser(UserPermissions);
+
+            GridData = await BudgetDetailsService.GetBudgetDetails(id);
+            header = await BudgetService.GetBudgetDetails(id);
+
+            discountLimits = (await DiscountLimitService.GetDiscountLimitsByBudgetID(id)).ToList();
+
+            //Load header data
+            Titulo = "Detalle de prespuesto ID. " + BudgetID;
+            Cliente = header.cliente;
+            Fecha = header.fecha.ToShortDateString();
+            NroPresupuesto = header.nro_presupuesto;
+            Moneda = header.moneda;
+            Cotizacion = header.cotizacion.ToString();
+            Estado = header.estado;
+            Vendedor = header.vendedor;
+            Condicion = header.condicion;
+            Exento = header.cliente_exento;
+            Motivo = header.motivo;
+
+            //Verify if prinatable layout
+            if (IsPrintable)
+            {
+                ToolbarItems = null;
+            }
+
+            //Set the Number format by the Currency
+            if (Moneda == "Dolar")
+            {
+                format = "N2";
+            }
+            else
+            {
+                format = "N0";
+            }
+
+            erpTools = new SystemTools();
+
+            //Get System configuration
+            mainURL = await erpTools.GetSystemParam("BaseURL");
+            mainLogo = await erpTools.GetSystemParam("MainLogo");
+
+            imagePath = mainURL + mainLogo;
+
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener detalles del presupuesto: " + ex.Message;
+        }
+    }
+
+
+
+    private async Task OnBeginHandler(ActionEventArgs<BudgetDetails> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            ((BudgetDetails)Args.Data).id_presupuesto = Int32.Parse(BudgetID);
+            await SaveBudgetDetail((BudgetDetails)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteBudgetDetail(((BudgetDetails)Args.Data).id_presupuesto_detalle);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Add || Args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+
+            discounts = await DiscountService.GetAllDiscounts();
+        }
+
+        return;
+    }
+
+    private async Task OnDiscountLimitsBeginHandler(ActionEventArgs<DiscountLimit> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //Loop Budget Detail Item
+            Product product;
+            DiscountLimit limit;
+
+            limit = (DiscountLimit)Args.Data;
+
+            if (limit.limite < limit.limite_actual)
+            {
+                Message = "El valor ingresado supera el límite definido para la marca. No serán aplicados cambios al prespuesto!";
+                IsMessageVisible = true;
+                return;
+            }
+
+
+            for (int i = 0; i < GridData.Count(); i++)
+            {
+                BudgetDetails item = GridData.ElementAt(i);
+
+                product = await ProductService.GetProductDetails(item.id_producto);
+                if (product.id_marca == ((DiscountLimit)Args.Data).id_marca)
+                {
+                    item.precio_unitario = item.precio - (item.precio * (((DiscountLimit)Args.Data).limite_actual / 100));
+                    item.porcentaje = ((DiscountLimit)Args.Data).limite_actual;
+                }
+
+                await SaveBudgetDetail(item);
+
+            }
+
+            await ReloadBudgetDetails();
+        }
+
+
+        return;
+    }
+
+    private async Task ReloadBudgetDetails()
+    {
+        int id = Int32.Parse(BudgetID);
+        GridData = await BudgetDetailsService.GetBudgetDetails(id);
+        Grid.Refresh();
+
+        //reload discount limits based on budget's
+        discountLimits = (await DiscountLimitService.GetDiscountLimitsByBudgetID(id)).ToList();
+    }
+
+
+    private async Task ActionCompletedHandler(ActionEventArgs<BudgetDetails> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save || Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await ReloadBudgetDetails();
+        }
+
+    }
+
+
+    protected async Task SaveBudgetDetail(BudgetDetails budgetDetails)
+    {
+        if (budgetDetails.id_presupuesto_detalle != 0 && isChecked)
+        {
+            await BudgetDetailsService.SaveBudgetDetails(budgetDetails, isChecked);
+        }
+        else
+        {
+            await BudgetDetailsService.SaveBudgetDetails(budgetDetails);
+        }
+    }
+
+    protected async Task DeleteBudgetDetail(int id)
+    {
+        await BudgetDetailsService.DeleteBudgetDetails(id);
+    }
+
+    public async Task ExcelExport()
+    {
+        ExcelExportProperties ExportProperties = new ExcelExportProperties();
+        ExportProperties.IncludeHiddenColumn = true;
+        await this.Grid.ExcelExport(ExportProperties);
+    }
+
+    private void Navigate()
+    {
+        NavigationManager.NavigateTo($"/Budgets");
+    }
+
+}

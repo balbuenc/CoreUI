@@ -1,0 +1,120 @@
+﻿@page "/Neighborhood"
+@using Syncfusion.Blazor.Grids
+@using Model
+@using Interfaces
+@inject INeighborhoodService NeighborhoodService
+@inject ICityService CityService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Barrios</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Neighborhood"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Neighborhood.id_barrio) HeaderText="ID" TextAlign="TextAlign.Center" Width="30" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Neighborhood.ciudad) HeaderText="Neighborhood" Width="30">
+                                <EditTemplate>
+                                    <SfDropDownList TValue="Int32" TItem="City" @bind-Value="@((context as Neighborhood).id_ciudad)" Placeholder="Selecccione Ciudad" DataSource="@cities" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                        <DropDownListFieldSettings Text="ciudad" Value="id_ciudad"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(Neighborhood.barrio) HeaderText="Neighborhood" Width="40"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+@code
+{
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Neighborhood> GridData { get; set; }
+    public IEnumerable<City> cities { get; set; }
+
+    SfGrid<Neighborhood> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await NeighborhoodService.GetAllNeighborhoods();
+            cities = await CityService.GetAllCities();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener barrios: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Neighborhood> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveNeighborhood((Neighborhood)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteNeighborhood(((Neighborhood)Args.Data).id_barrio);
+        }
+
+        return;
+    }
+
+    protected async Task SaveNeighborhood(Neighborhood neighborhood)
+    {
+        await NeighborhoodService.SaveNeighborhood(neighborhood);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected async Task DeleteNeighborhood(int id)
+    {
+        await NeighborhoodService.DeleteNeighborhood(id);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected void ReloadPage()
+    {
+        NavigationManager.NavigateTo("/Neighborhood", true);
+    }
+}
+

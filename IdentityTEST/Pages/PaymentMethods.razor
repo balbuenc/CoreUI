@@ -1,0 +1,101 @@
+﻿@page "/PaymentMethod"
+@using Syncfusion.Blazor.Grids
+@using Model
+@using Interfaces
+@inject IPaymentMethodService PaymentMethodService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.Inputs
+@using System.IO
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Medios de pago</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" Toolbar="@ToolbarItems" AllowSorting="true" DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="PaymentMethod"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(PaymentMethod.id_medio_pago) HeaderText="ID" TextAlign="TextAlign.Center" Width="30" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(PaymentMethod.medio) HeaderText="Medio" Width="150"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<PaymentMethod> GridData { get; set; }
+
+    SfGrid<PaymentMethod> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await PaymentMethodService.GetAllPaymentMethods();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener medios: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<PaymentMethod> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SavePaymentMethod((PaymentMethod)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeletePaymentMethod(((PaymentMethod)Args.Data).id_medio_pago);
+        }
+
+        return;
+    }
+
+    protected async Task SavePaymentMethod(PaymentMethod method)
+    {
+        await PaymentMethodService.SavePaymentMethod(method);
+        Grid.Refresh();
+    }
+
+    protected async Task DeletePaymentMethod(int id)
+    {
+        await PaymentMethodService.DeletePaymentMethod(id);
+        Grid.Refresh();
+    }
+
+
+}
+

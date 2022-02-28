@@ -1,0 +1,387 @@
+﻿@page "/AccDetails/{AccountID}"
+@using Model
+@using Interfaces
+
+@inject IAccountDetailsService AccountDetailsService
+@inject IEmployeeService EmployeeService
+@inject IAccountService AccountService
+
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize]
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+@using Syncfusion.Blazor.Popups;
+@using Syncfusion.Blazor.Notifications
+@using Syncfusion.Blazor.Buttons
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-title" role="banner"><b>Detalle de cuenta: #@AccountNumber | @AccountDenomination </b></div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+            <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems" DataSource="@GridData" Locale="es-ES" ShowColumnChooser="true" AllowFiltering="true" AllowExcelExport="true">
+
+                <GridEvents OnActionBegin="OnBeginHandler" OnActionComplete="OnCompleteHandler" TValue="AccountDetails" OnToolbarClick="ToolbarClickHandler" ></GridEvents>
+                <GridPageSettings PageSize="20"></GridPageSettings>
+                <GridFilterSettings Type ="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+                <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams">
+                    <HeaderTemplate>
+                        @{
+                            var detal = (context as AccountDetails);
+                        }
+                        <span>Detalle cuenta Nro.: @(detal.nro_cuenta)</span>
+                    </HeaderTemplate>
+                    <Template>
+                        @{
+                            var detal = (context as AccountDetails);
+                        }
+                        <div>
+                            <div class="form-row">
+                                <div class="form-group col-md-3">
+                                    <SfNumericTextBox @bind-Value="@(detal.id_cuenta_detalle)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <SfDatePicker @bind-Value="@(detal.fecha)" Enabled="true" Placeholder="Fecha" FloatLabelType="FloatLabelType.Always"> </SfDatePicker>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-5">
+                                    <SfDropDownList DataSource="@LocalTipo"
+                                                    TItem="Tipo"
+                                                    TValue="string"
+                                                    @bind-Value="@(detal.tipo)"
+                                                    Placeholder="Tipo"
+                                                    FloatLabelType="FloatLabelType.Always">
+                                        <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <SfTextBox @bind-Value="@(detal.nro_cuenta)" Enabled="false" Placeholder="#Cuenta" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfTextBox @bind-Value="@(detal.concepto)" Enabled="true" Placeholder="Concepto" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfTextBox @bind-Value="@(detal.beneficiario)" Enabled="true" Placeholder="Beneficiario" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-5">
+                                    <SfTextBox @bind-Value="@(detal.nro_comprobante)" Enabled="true" Placeholder="#Comprobante" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </div>
+                                <div class="form-group col-md-5">
+                                    <SfNumericTextBox @bind-Value="@(detal.monto)" Enabled="true" Placeholder="Monto" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <SfTextBox @bind-Value="@(detal.detalle)" Enabled="true" Placeholder="Detalle" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                </div>
+
+                            </div>
+                        </div>
+                    </Template>
+                </GridEditSettings>
+                <GridColumns>
+                    <GridColumn Field=@nameof(AccountDetails.id_cuenta_detalle) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+
+                    <GridColumn Field=@nameof(AccountDetails.fecha) HeaderText="Fecha" Width="20" Format="dd/MM/yyyy"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.concepto) HeaderText="Concepto" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.beneficiario) HeaderText="Beneficiario" Visible="false" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.nro_comprobante) HeaderText="#Comprobante" Width="30"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.nro_cuenta) HeaderText="#Cuenta" Visible="false" Width="30"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.detalle) HeaderText="Detalle" Width="100" Visible="false"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.tipo) HeaderText="Tipo" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.monto) HeaderText="Monto" Width="40" Format="N0"></GridColumn>
+                    <GridColumn Field=@nameof(AccountDetails.usuario) HeaderText="Usuario" Visible="false" Width="30"></GridColumn>
+
+                </GridColumns>
+            </SfGrid>
+                }
+
+            </div>
+            <SfDialog Target="#target"
+                      Width="300px"
+                      Height="130px"
+                      IsModal="true"
+                      ShowCloseIcon="false"
+                      @bind-Visible="DeleteRecordConfirmVisibility">
+                <DialogTemplates>
+                    <Header> Eliminar el registro? </Header>
+                    <Content>
+                        <div class="button-container">
+                            <button type="submit"
+                                    class="e-btn e-normal e-primary"
+                                    @onclick="ConfirmDeleteYes">
+                                Yes
+                            </button>
+                            <button type="submit"
+                                    class="e-btn e-normal"
+                                    @onclick="ConfirmDeleteNo">
+                                No
+                            </button>
+                        </div>
+                    </Content>
+                </DialogTemplates>
+            </SfDialog>
+            <SfToast @ref="ToastObj" Title="@ToastTitle" Content="@ToastContent" CssClass="@ToastCssClass">
+                <ToastPosition X="Right" Y="Bottom"></ToastPosition>
+            </SfToast>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    #toast_default .e-meeting::before {
+        content: "\e705";
+        font-size: 17px;
+    }
+</style>
+
+@code {
+
+
+    [Parameter]
+    public string AccountID { get; set; }
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "ExcelExport", "Search", "ColumnChooser" };
+    public string ErrorDetails = "";
+
+    public IEnumerable<AccountDetails> GridData { get; set; }
+    public IEnumerable<Employee> employees { get; set; }
+    public Account account;
+
+    public bool EditDialogVisibility { get; set; } = false;
+    public bool DeleteRecordConfirmVisibility { get; set; } = false;
+
+    public Int32 ID = 0;
+
+    public string UserName;
+    public string AccountNumber;
+    public string AccountDenomination;
+
+    SfToast ToastObj;
+
+    private int ToastFlag = 0;
+    private string ToastTitle = "";
+    private string ToastContent = "";
+    private string ToastCssClass = "";
+
+
+    private class ToastOption
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string CssClass { get; set; }
+    }
+
+    private ToastOption[] Toasts = new ToastOption[] {
+        new ToastOption { Title = "Warning !", Content = "El registro se eliminó con éxito.", CssClass = "e-toast-warning" },
+        new ToastOption { Title = "Success !", Content = "El registro se modificó con éxito.", CssClass = "e-toast-success" },
+        new ToastOption { Title = "Error !", Content = "A problem has been occurred while submitting your data.", CssClass = "e-toast-danger" },
+        new ToastOption { Title = "Information !", Content = "Please read the comments carefully.", CssClass = "e-toast-info" }
+    };
+
+    public class Tipo
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+    }
+
+    List<Tipo> LocalTipo = new List<Tipo> {
+    new Tipo() { ID= "Crédito", Text= "Crédito" },
+    new Tipo() { ID= "Débito", Text= "Débito" },
+  };
+
+
+    SfGrid<AccountDetails> Grid { get; set; }
+
+    private DialogSettings DialogParams = new DialogSettings { Width = "850px", EnableResize = true, AllowDragging = true };
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            int id = Int32.Parse(AccountID);
+            GridData = await AccountDetailsService.GetAllAccountDetails(id);
+            employees = await EmployeeService.GetAllEmployees();
+            account = await AccountService.GetAccountDetails(id);
+
+            AccountNumber = account.nro_cuenta;
+            AccountDenomination = account.denominacion;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            string[] subs = user.Identity.Name.Split("@");
+            UserName = subs[0];
+
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener detalle de la cuenta: " + ex.Message;
+        }
+    }
+
+    public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "Grid_excelexport") //Id is combination of Grid's ID and itemname
+        {
+            ExcelExportProperties ExcelProperties = new ExcelExportProperties();
+            ExcelProperties.FileName = AccountDenomination + ".xlsx";
+            await this.Grid.ExcelExport(ExcelProperties);
+        }
+    }
+
+
+    private async Task OnBeginHandler(ActionEventArgs<AccountDetails> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveAccountDetails((AccountDetails)Args.Data);
+
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            ID = ((AccountDetails)Args.Data).id_cuenta_detalle;
+
+            // Open Delete confirmation dialog
+            this.DeleteRecordConfirmVisibility = true;
+            StateHasChanged();
+        }
+
+        return;
+    }
+
+    private async Task OnCompleteHandler(ActionEventArgs<AccountDetails> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await ShowToast(1);
+            GridData = await AccountDetailsService.GetAllAccountDetails(Int32.Parse(AccountID));
+            Grid.Refresh();
+
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+
+            StateHasChanged();
+        }
+
+        return;
+    }
+
+    protected async Task SaveAccountDetails(AccountDetails accountDetail)
+    {
+        accountDetail.id_cuenta = Int32.Parse(AccountID);
+        accountDetail.id_funcionario = GetEmployeeID(UserName);
+
+
+        await AccountDetailsService.SaveAccountDetail(accountDetail);
+        Grid.Refresh();
+
+    }
+
+    protected async Task DeleteAccountDetails(int id)
+    {
+        await AccountDetailsService.DeleteAccountDetail(id);
+        await ShowToast(0);
+        Grid.Refresh();
+
+    }
+
+
+
+    public async void ConfirmDeleteYes()
+    {
+        // The user selected Yes to delete the
+        // seleted Help Desk Ticket
+        // Delete the record
+        await DeleteAccountDetails(ID);
+
+        // Close the dialog
+        this.DeleteRecordConfirmVisibility = false;
+
+        // Refresh the SfGrid
+        // so the deleted record will not show
+        Grid.Refresh();
+    }
+
+    public void ConfirmDeleteNo()
+    {
+        // Open the dialog
+        // to give the user a chance
+        // to confim they want to delete the record
+        this.DeleteRecordConfirmVisibility = false;
+    }
+
+    public Int32 GetEmployeeID(string username)
+    {
+        int id;
+        try
+        {
+            id = employees.First(c => c.usuario == username).id_funcionario;
+            return id;
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener ID de usuario : " + ex.Message;
+            return 1;
+        }
+    }
+
+    private async Task ShowToast(int ix)
+    {
+        this.ToastTitle = this.Toasts[ix].Title;
+        this.ToastContent = this.Toasts[ix].Content;
+        this.ToastCssClass = this.Toasts[ix].CssClass;
+        await Task.Delay(200);
+
+        await this.ToastObj.Show();
+
+    }
+
+
+
+    private async Task HideToast()
+    {
+
+        await this.ToastObj.Hide("All");
+    }
+}
+
+

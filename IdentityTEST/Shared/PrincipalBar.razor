@@ -1,0 +1,45 @@
+﻿@using Blazorise
+
+
+
+<Bar Breakpoint="Breakpoint.Desktop"
+     Background="Background.Light"
+     ThemeContrast="ThemeContrast.Light">
+    <BarBrand>
+        <div class="text-lg-left"> Core ERP </div>
+    </BarBrand>
+    <BarToggler> </BarToggler>
+    <BarMenu>
+        <BarStart>
+
+            <BarItem>
+                <BarLink To="#home">Home</BarLink>
+            </BarItem>
+            <BarItem>
+                <BarLink To="#docs">Documentación</BarLink>
+            </BarItem>
+        </BarStart>
+
+        <BarEnd>
+            <BarItem>
+                <AuthorizeView>
+                    <Authorized>
+
+                        <li class="nav-item px-3">
+                            <a href="Identity/Account/Manage"><b>@context.User.Identity.Name</b></a>
+                        </li>
+
+                    </Authorized>
+
+                </AuthorizeView>
+            </BarItem>
+
+        </BarEnd>
+    </BarMenu>
+
+</Bar>
+
+
+
+
+

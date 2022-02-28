@@ -1,0 +1,99 @@
+﻿@page "/CivilStatus"
+@using Syncfusion.Blazor.Grids
+@using Model
+@using Interfaces
+@inject ICivilStatusService CivilStatusService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Estados civiles</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="CivilStatus"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(CivilStatus.id_estado_civil) HeaderText="ID" TextAlign="TextAlign.Center" Width="30" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(CivilStatus.estado_civil) HeaderText="Estado civil" Width="150"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<CivilStatus> GridData { get; set; }
+
+    SfGrid<CivilStatus> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await CivilStatusService.GetAllCivilStatus();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener estados civiles: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<CivilStatus> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveCivilStatus((CivilStatus)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteCivilStatus(((CivilStatus)Args.Data).id_estado_civil);
+        }
+
+        return;
+    }
+
+    protected async Task SaveCivilStatus(CivilStatus nationality)
+    {
+        await CivilStatusService.SaveCivilStatus(nationality);
+        Grid.Refresh();
+    }
+
+    protected async Task DeleteCivilStatus(int id)
+    {
+        await CivilStatusService.DeleteCivilStatus(id);
+        Grid.Refresh();
+    }
+}
+

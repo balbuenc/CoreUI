@@ -1,0 +1,103 @@
+﻿@page "/ClientType"
+@using Model
+@using Interfaces
+@inject IClientTypeService ClientTypeService
+@attribute [Authorize]
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+   
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Tipo de clientes</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true"  Toolbar="@ToolbarItems">
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="ClientType"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(ClientType.id_tipo_cliente) HeaderText="ID" TextAlign="TextAlign.Center" Width="20" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(ClientType.tipo) HeaderText="Tipo" Width="80">
+                            </GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+@code
+{
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<ClientType> GridData { get; set; }
+
+
+    SfGrid<ClientType> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await ClientTypeService.GetAllClientTypes();
+
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener tipos de cliente: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<ClientType> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveClientType((ClientType)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteClientType(((ClientType)Args.Data).id_tipo_cliente);
+        }
+
+        return;
+    }
+
+    protected async Task SaveClientType(ClientType city)
+    {
+        await ClientTypeService.SaveClientType(city);
+       
+    }
+
+    protected async Task DeleteClientType(int id)
+    {
+        await ClientTypeService.DeleteClientType(id);
+      
+    }
+
+    protected void ReloadPage()
+    {
+        NavigationManager.NavigateTo("/ClientType", true);
+    }
+}

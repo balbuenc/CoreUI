@@ -1,0 +1,32 @@
+﻿@page "/BudgetPrintable/{BudgetID}"
+@layout BlankLayout
+@inject IJSRuntime Js
+
+@using Microsoft.AspNetCore.Http
+
+
+
+@attribute [Authorize]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Navigations
+
+
+
+<body onload="window.print()">
+    <BDetails BudgetID="@BudgetID"  IsPrintable="true" ></BDetails>
+</body>
+
+@code{
+
+    [Parameter]
+    public string BudgetID { get; set; }
+
+}

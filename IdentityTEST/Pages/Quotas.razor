@@ -1,0 +1,393 @@
+﻿@page "/Quotas"
+@using Model
+@using Interfaces
+@inject IQuotaService QuotaService
+@inject IPaymentMethodService PaymentMethodService
+@inject IEmployeeService EmployeeService
+@inject ICollectionService CollectionService
+
+@using Microsoft.AspNetCore.Http
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@attribute [Authorize]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Navigations
+
+<style>
+    .e-custom {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+    }
+
+        .e-custom, .e-custom:hover, .e-custom:focus, .e-custom:active {
+            background-color: #ff6e40;
+            color: #fff;
+        }
+
+    .e-require {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+        background-color: lawngreen
+    }
+
+        .e-require, .e-require:hover {
+            color: white;
+            background-color: red;
+        }
+
+    .e-approve, .e-approve:hover, .e-approve:focus, .e-approve:active {
+        border-radius: 10px;
+        height: 30px;
+        width: 180px;
+        background-color: seagreen;
+        color: white
+    }
+</style>
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Cuotas</b></div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    @*<SfButton OnClick="ExcelExport" Content="Excel Export"></SfButton>*@
+                    <SfGrid TValue="Quota" ID="Grid" @ref="Grid" AllowPaging="true" Toolbar="@ToolbarItems" DataSource="@GridData" AllowExcelExport="true" ShowColumnChooser="true" AllowTextWrap="true">
+                        <GridEvents OnActionBegin="OnBeginHandler" OnActionComplete="ActionCompletedHandler" TValue="Quota"></GridEvents>
+                        <GridPageSettings PageSize="30"></GridPageSettings>
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams">
+                            <HeaderTemplate>
+                                @{
+                                    var quo = (context as Quota);
+                                }
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-10">
+                                            <h1 class="display-4">@(quo.cliente.ToUpper())</h1>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-10">
+                                            <b>Cuota N° @(quo.cuota_str)</b>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var quo = (context as Quota);
+                                    if (quo.fecha_pago == t)
+                                        quo.fecha_pago = hoy;
+
+                                    actQuote = quo;
+
+                                   
+                                 
+                                }
+                                <div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.id_cuota)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(quo.cuota_str)" Enabled="false" Placeholder="Nro. Cuota" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(quo.moneda)" Enabled="false" Placeholder="Moneda" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfDatePicker TValue="DateTime" @bind-Value="@(quo.vencimiento)" Format="dd/MM/yyyy" Enabled="true" Placeholder="Vencimiento" FloatLabelType="FloatLabelType.Always"> </SfDatePicker>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfDatePicker TValue="DateTime?" @bind-Value="@(quo.fecha_pago)" Format="dd/MM/yyyy" Enabled="false" Placeholder="Fecha pago" FloatLabelType="FloatLabelType.Always"> </SfDatePicker>
+                                        </div>
+
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.monto_capital)" Enabled="false" Placeholder="Capital" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.monto_interes)" Enabled="false" Placeholder="Interes" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.mora)" Enabled="false" Placeholder="Mora" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.multa)" Enabled="false" Placeholder="Multa" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(quo.total)" Enabled="false" Placeholder="TOTAL" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(quo.estado)" Enabled="false" Placeholder="Estado" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+
+                                    </div>
+                                    @if (quo.estado == "PENDIENTE")
+                                    {
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <SfDropDownList DataSource="@paymentMethods"
+                                                                TItem="PaymentMethod"
+                                                                TValue="Int32?"
+                                                                @bind-Value="@(quo.id_metodo_pago)"  
+                                                                Placeholder="Medio de pago"
+                                                                FloatLabelType="FloatLabelType.Always" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                    <DropDownListFieldSettings Value="id_medio_pago" Text="medio"></DropDownListFieldSettings>
+                                                </SfDropDownList>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+
+                                                <SfButton CssClass="e-approve" IconPosition="IconPosition.Right" OnClick="PayQuote">Pagar</SfButton>
+
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </Template>
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Quota.id_cuota) HeaderText="ID" TextAlign="TextAlign.Center" Width="10" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.cliente) HeaderText="Cliente" Visible="true" Width="40"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.ruc) HeaderText="RUC" Visible="true" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.cuota_str) HeaderText="#" Visible="true" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.vencimiento) HeaderText="Venc." Format="dd/MM/yyyy" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.fecha_pago) HeaderText="Fech. pago" Format="dd/MM/yyyy" Width="20"></GridColumn>
+
+                            <GridColumn Field=@nameof(Quota.moneda) HeaderText="Moneda" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.monto_capital) HeaderText="Capital" Width="20" Format="N0"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.monto_interes) HeaderText="Int." Visible="false" Width="15" Format="N0"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.mora) HeaderText="Mora" Visible="false" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.multa) HeaderText="Multa" Visible="false" Width="15" Format="N0"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.total) HeaderText="Total" Visible="true" Width="20" Format="N0"></GridColumn>
+                            <GridColumn Field=@nameof(Quota.estado) HeaderText="Estado" Visible="true" Width="20"></GridColumn>
+
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+    //public IEnumerable<Quota> clients { get; set; }
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search", "ColumnChooser" };
+    public string ErrorDetails = "";
+
+    public IEnumerable<Quota> GridData { get; set; }
+    public IEnumerable<PaymentMethod> paymentMethods { get; set; }
+    public IEnumerable<Employee> employees { get; set; }
+
+
+
+    public DateTime hoy = DateTime.Today;
+    public DateTime t;
+
+    SfGrid<Quota> Grid { get; set; }
+
+    private DialogSettings DialogParams = new DialogSettings { Width = "850px", EnableResize = true, AllowDragging = true };
+
+    public string UserName;
+
+    public Quota actQuote { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await QuotaService.GetAllQuotas();
+
+            employees = await EmployeeService.GetAllEmployees();
+            paymentMethods = await PaymentMethodService.GetAllPaymentMethods();
+
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            string[] subs = user.Identity.Name.Split("@");
+            UserName = subs[0];
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener compras [OnInitializedAsync] : " + ex.Message;
+        }
+    }
+
+    protected async void PayQuote()
+    {
+        Collection coll = new Collection();
+
+        coll.id_cuota = actQuote.id_cuota;
+        coll.id_medio_pago = actQuote.id_metodo_pago;
+        coll.fecha = DateTime.Now;
+        coll.monto_cobrado = actQuote.total;
+        coll.id_funcionario = GetEmployeeID(UserName);
+
+        actQuote.estado = "CANCELADA";
+        actQuote.fecha_pago = coll.fecha;
+
+        //Actualizo la CUOTA a CANCELADA
+        await QuotaService.UpdateQuota(actQuote);
+
+        //Creo el cobro
+        await CollectionService.SaveCollection(coll);
+
+        Navigate();
+
+
+    }
+
+
+    private async Task OnBeginHandler(ActionEventArgs<Quota> Args)
+    {
+        try
+        {
+            if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+            {
+                await UpdateQuota((Quota)Args.Data);
+            }
+            else
+            if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+            {
+                await DeleteBudget(((Quota)Args.Data).id_cuota);
+            }
+            else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+            {
+                ((Quota)Args.Data).estado = "Generado";
+            }
+
+            return;
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener compras [OnBeginHandler]: " + ex.Message + " Inner.: " + ex.InnerException;
+            throw ex;
+        }
+    }
+
+    private async Task ActionCompletedHandler(ActionEventArgs<Quota> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save || Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            GridData = await QuotaService.GetAllQuotas();
+            Grid.Refresh();
+        }
+
+    }
+
+
+    protected async Task UpdateQuota(Quota quota)
+    {
+        try
+        {
+            //cuota.id_funcionario = GetEmployeeID(UserName);
+            await QuotaService.UpdateQuota(quota);
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al actualizar  cuota: " + ex.Message;
+            throw ex;
+        }
+    }
+
+
+    protected async Task SaveBudget(Sale sale)
+    {
+        try
+        {
+            //cuota.id_funcionario = GetEmployeeID(UserName);
+            await QuotaService.SaveQuota(sale);
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al registrar cuota: " + ex.Message;
+            throw ex;
+        }
+    }
+
+    protected async Task DeleteBudget(int id)
+    {
+        await QuotaService.DeleteQuota(id);
+    }
+
+    public async Task ExcelExport()
+    {
+        ExcelExportProperties ExportProperties = new ExcelExportProperties();
+        ExportProperties.IncludeHiddenColumn = true;
+
+        await this.Grid.ExcelExport(ExportProperties);
+    }
+
+    public Int32 GetEmployeeID(string username)
+    {
+        int id;
+        try
+        {
+            id = employees.First(c => c.usuario == username).id_funcionario;
+            return id;
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener ID de usuario : " + ex.Message;
+            return 1;
+        }
+    }
+
+    private void Navigate(Quota quota)
+    {
+        NavigationManager.NavigateTo($"/QuotaDetails/{quota.id_cuota}");
+    }
+
+    private void Navigate()
+    {
+        NavigationManager.NavigateTo($"/Collection");
+    }
+
+}
+
+

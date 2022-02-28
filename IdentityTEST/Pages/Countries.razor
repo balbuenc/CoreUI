@@ -1,0 +1,117 @@
+﻿@page "/Country"
+@using Model
+@using Interfaces
+@inject ICountryService CountryService
+@inject ICurrencyService  CurrencyService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@inject NavigationManager NavigationManager
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Paises</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Country"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Country.id_pais) HeaderText="ID" TextAlign="TextAlign.Center" Width="20" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Country.pais) HeaderText="Pais" Width="50"></GridColumn>
+                            <GridColumn Field=@nameof(Country.moneda) HeaderText="Moneda" Width="30" EditType="EditType.DropDownEdit">
+                                <EditTemplate>
+                                    <SfDropDownList TValue="Int32" TItem="Currency" @bind-Value="@((context as Country).id_moneda)" Placeholder="Moneda" FloatLabelType="FloatLabelType.Always" DataSource="@currencies" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                        <DropDownListFieldSettings Text="moneda" Value="id_moneda"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </EditTemplate>
+                            </GridColumn>
+
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Country> GridData { get; set; }
+    public IEnumerable<Currency> currencies { get; set; }
+
+    SfGrid<Country> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await CountryService.GetAllCountries();
+            currencies = await CurrencyService.GetAllCurrencies();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener cargos: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Country> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveCountry((Country)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteCountry(((Country)Args.Data).id_pais);
+        }
+
+        return;
+    }
+
+    protected async Task SaveCountry(Country position)
+    {
+        await CountryService.SaveCountry(position);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected async Task DeleteCountry(int id)
+    {
+        await CountryService.DeleteCountry(id);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected void ReloadPage()
+    {
+        NavigationManager.NavigateTo("/Country", true);
+    }
+}

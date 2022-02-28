@@ -1,0 +1,114 @@
+﻿@page "/Origin"
+@using Model
+@using Interfaces
+@inject ICountryService CountryService
+@inject IOriginService  OriginService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@inject NavigationManager NavigationManager
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Origenes</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Origin"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Origin.id_origen) HeaderText="ID" TextAlign="TextAlign.Center" Width="20" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Origin.origen) HeaderText="Origen" Width="50"></GridColumn>
+                            <GridColumn Field=@nameof(Origin.id_pais) HeaderText="Pais" Width="30" EditType="EditType.DropDownEdit">
+                                <EditTemplate>
+                                    <SfDropDownList TValue="Int32" TItem="Country" @bind-Value="@((context as Origin).id_pais)" Placeholder="Pais" FloatLabelType="FloatLabelType.Always" DataSource="@countries" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                        <DropDownListFieldSettings Text="pais" Value="id_pais"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </EditTemplate>
+                            </GridColumn>
+
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Origin> GridData { get; set; }
+    public IEnumerable<Country> countries { get; set; }
+
+    SfGrid<Origin> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await OriginService.GetAllOrigins();
+            countries = await CountryService.GetAllCountries();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener origenes: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Origin> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveOrigin((Origin)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteOrigin(((Origin)Args.Data).id_origen);
+        }
+
+        return;
+    }
+
+    protected async Task SaveOrigin(Origin position)
+    {
+        await OriginService.SaveOrigin(position);
+        Grid.Refresh();
+
+    }
+
+    protected async Task DeleteOrigin(int id)
+    {
+        await OriginService.DeleteOrigin(id);
+        Grid.Refresh();
+
+    }
+
+
+}

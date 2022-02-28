@@ -1,0 +1,112 @@
+﻿@page "/City"
+@using Model
+@using Interfaces
+@inject ICityService CityService
+@inject ICountryService CountryService
+@attribute [Authorize]
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Ciudades</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" DataSource="@GridData"   Toolbar="@ToolbarItems">
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="City"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(City.id_ciudad) HeaderText="ID" TextAlign="TextAlign.Center" Width="20" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(City.pais) HeaderText="Pais" Width="80">
+                                <EditTemplate>
+                                    <SfDropDownList TValue="Int32" TItem="Country" @bind-Value="@((context as City).id_pais)" Placeholder="Selecccione Pais" DataSource="@countries" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                        <DropDownListFieldSettings Text="pais" Value="id_pais"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </EditTemplate>
+
+                            </GridColumn>
+                            <GridColumn Field=@nameof(City.ciudad) HeaderText="Ciudad" Width="150"></GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+@code
+{
+
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+
+    public IEnumerable<City> GridData { get; set; }
+    public IEnumerable<Country> countries { get; set; }
+
+    SfGrid<City> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await CityService.GetAllCities();
+            countries = await CountryService.GetAllCountries();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener ciudades: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<City> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveCity((City)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteCity(((City)Args.Data).id_ciudad);
+        }
+
+        return;
+    }
+
+    protected async Task SaveCity(City city)
+    {
+        await CityService.SaveCity(city);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected async Task DeleteCity(int id)
+    {
+        await CityService.DeleteCity(id);
+        //Grid.Refresh();
+        ReloadPage();
+    }
+
+    protected void ReloadPage()
+    {
+        NavigationManager.NavigateTo("/City", true);
+    }
+}

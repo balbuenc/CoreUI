@@ -1,0 +1,202 @@
+﻿@page "/Collection"
+@using Syncfusion.Blazor.Grids
+@using Model
+@using Interfaces
+@inject ICollectionService CollectionService
+@attribute [Authorize]
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.Inputs
+@using System.IO
+@using Syncfusion.Blazor.Buttons
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Cobranzas</b></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfButton OnClick="ExcelExport" Content="Excel Export"></SfButton>
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" Toolbar="@ToolbarItems" AllowSorting="true" DataSource="@GridData" AllowExcelExport="true" ShowColumnChooser="true">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Collection"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog">
+                            <HeaderTemplate>
+                                @{
+                                    var colle = (context as Collection);
+                                }
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-10">
+                                            <h1 class="display-4">@(colle.cliente.ToUpper())</h1>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-10">
+                                            <b>Cuota N° @(colle.cuota)</b>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var colle = (context as Collection);
+
+                                }
+                                <div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-2">
+                                            <SfNumericTextBox @bind-Value="@(colle.id_cobranza)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-7">
+                                            <SfTextBox @bind-Value="@(colle.cliente)" Enabled="false" Placeholder="Cliente" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(colle.cuota)" Enabled="false" Placeholder="Cu0ta" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(colle.medio_pago)" Enabled="false" Placeholder="Medio" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(colle.monto_cobrado)" Enabled="false" Placeholder="Monto" Format="N0" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(colle.nro_recibo)" Enabled="true" Placeholder="#Recibo" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(colle.nro_comprobante)" Enabled="true" Placeholder="#Comprobante" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfTextBox @bind-Value="@(colle.nro_transaccion)" Enabled="true" Placeholder="#Transacción" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </Template>
+
+
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Collection.id_cobranza) HeaderText="ID" TextAlign="TextAlign.Center" Width="30" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.cliente) HeaderText="Cliente" Width="40"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.ruc) HeaderText="RUC" Width="15"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.fecha) HeaderText="Fecha cobro" Width="15"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.cuota) HeaderText="cuota" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.funcionario) HeaderText="Funcionario" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.monto_cobrado) HeaderText="Monto" Width="20" Format="N0"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.medio_pago) HeaderText="Medio" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.nro_recibo) HeaderText="#Recibo" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.nro_comprobante) HeaderText="#Comprobante" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Collection.nro_transaccion) HeaderText="#Transaccion" Width="20"></GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    public string Message { get; set; }
+    //public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+    public string[] ToolbarItems = new string[] { "Edit", "Update", "Cancel", "Search" };
+
+    public IEnumerable<Collection> GridData { get; set; }
+
+    SfGrid<Collection> Grid { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await CollectionService.GetAllCollections();
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener cobranzas: " + ex.Message;
+        }
+    }
+
+    private async Task OnBeginHandler(ActionEventArgs<Collection> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveCollection((Collection)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteCollection(((Collection)Args.Data).id_cobranza);
+        }
+
+        return;
+    }
+
+    protected async Task SaveCollection(Collection nationality)
+    {
+        await CollectionService.SaveCollection(nationality);
+        Grid.Refresh();
+    }
+
+    protected async Task DeleteCollection(int id)
+    {
+        await CollectionService.DeleteCollection(id);
+        Grid.Refresh();
+    }
+
+    public async Task ExcelExport()
+    {
+        ExcelExportProperties ExportProperties = new ExcelExportProperties();
+        ExportProperties.IncludeHiddenColumn = true;
+
+
+        ExcelTheme Theme = new ExcelTheme();
+        ExcelStyle ThemeStyle = new ExcelStyle()
+        {
+            FontName = "Segoe UI",
+            FontColor = "#666666",
+            FontSize = 9
+        };
+        Theme.Header = ThemeStyle;
+        Theme.Record = ThemeStyle;
+        Theme.Caption = ThemeStyle;
+
+        ExportProperties.Theme = Theme;
+
+     
+
+        await this.Grid.ExcelExport(ExportProperties);
+    }
+
+
+}
+

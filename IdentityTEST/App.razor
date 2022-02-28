@@ -1,0 +1,36 @@
+﻿
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <div class="container">
+                        <div class="row">
+                            <div class="alert alert-primary" role="alert">
+                                <p><h3><b>No tiene acceso a este recurso.</b></h3></p>
+                                <p>Contacte con el administrador del sistema.</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <Button Color="Color.Secondary">
+                                <NavLink href="/Identity/Account/Login">Log In</NavLink>
+                            </Button>
+                        </div>
+                    </div>
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div class="container">
+                    <div class="alert alert-primary" role="alert">
+                        <p>Lo sentimos, no se encuentra el recurso solicitado.</p>
+                    </div>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

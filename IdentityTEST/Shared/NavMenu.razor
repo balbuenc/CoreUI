@@ -1,0 +1,186 @@
+﻿
+
+<Bar Mode="BarMode.VerticalInline"
+     CollapseMode="BarCollapseMode.Small"
+     Breakpoint="Breakpoint.Desktop"
+     NavigationBreakpoint="Breakpoint.Tablet"
+     ThemeContrast="ThemeContrast.Light">
+
+    <BarToggler Mode="BarTogglerMode.Popout" />
+    <BarBrand>
+        <BarItem>
+            <BarLink To="/">
+                <BarIcon IconName="IconName.Home" />
+                Home
+            </BarLink>
+        </BarItem>
+    </BarBrand>
+
+    <BarMenu>
+        <BarStart>
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="@("fa-universal-access")"></BarIcon>
+                        Administración
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Bank">Bancos</BarDropdownItem>
+                        <BarDropdownItem To="/AccountType">Tipos de cuenta</BarDropdownItem>
+                        <BarDropdownItem To="/Account">Cuentas</BarDropdownItem>
+                        <BarDropdownItem To="/DiscountLimit">Límite desc.</BarDropdownItem>
+                        <BarDropdownItem To="/LittleBoxes">Caja chica</BarDropdownItem>
+                        @*<BarDropdownItem To="/Configurations">Configuraciones</BarDropdownItem>*@
+                    </BarDropdownMenu>
+
+                </BarDropdown>
+            </BarItem>
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.Suitcase" />
+                        RRHH
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Employee">Funcionarios</BarDropdownItem>
+                        <BarDropdownItem To="/Area">Areas</BarDropdownItem>
+                        <BarDropdownItem To="/Position">Cargos</BarDropdownItem>
+                        <BarDropdownItem To="/CivilStatus">Estados civiles</BarDropdownItem>
+
+                    </BarDropdownMenu>
+
+                </BarDropdown>
+            </BarItem>
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.LocationArrow" />
+                        Localización
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+
+                        <BarDropdownItem To="/Country">Paises</BarDropdownItem>
+                        <BarDropdownItem To="/City">Ciudades</BarDropdownItem>
+                        <BarDropdownItem To="/Neighborhood">Barrios</BarDropdownItem>
+                        <BarDropdownItem To="/Nationality">Nacionalidades</BarDropdownItem>
+                        <BarDropdownItem To="/Currency">Monedas</BarDropdownItem>
+                    </BarDropdownMenu>
+
+                </BarDropdown>
+            </BarItem>
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.List" />
+                        Productos
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Product">Items</BarDropdownItem>
+                        <BarDropdownItem To="/Brand">Marcas</BarDropdownItem>
+                        <BarDropdownItem To="/Origin">Origenes</BarDropdownItem>
+                        <BarDropdownItem To="/Vendor">Proveedores</BarDropdownItem>
+                        <BarDropdownItem To="/Store">Depósitos</BarDropdownItem>
+                        <BarDropdownItem To="/Stock">Stock</BarDropdownItem>
+                        <BarDropdownItem To="/Transfer">Traslados</BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.ShoppingBag" />
+                        Compras
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Purchases">Pedidos (Stock)</BarDropdownItem>
+                        <BarDropdownItem To="/PurchaseOrders">O.C.</BarDropdownItem>
+                        <BarDropdownItem To="/GeneralPurchases">Compras</BarDropdownItem>
+                        <BarDropdownItem To="/Payments">Pagos</BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.MoneyBillAlt" />
+                        Ventas
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Budgets">Ventas</BarDropdownItem>
+                        <BarDropdownItem To="/Discounts">Descuentos</BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.Check" />
+                        Cobranzas
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/Quotas">Cuotas</BarDropdownItem>
+                        <BarDropdownItem To="/PaymentMethod">Medios de pago</BarDropdownItem>
+                        <BarDropdownItem To="/Collection">Cobranzas</BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="IconName.UserTie"> </BarIcon>
+                        Clientes
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="/ClientType/">Tipos de cliente</BarDropdownItem>
+                        <BarDropdownItem To="/Cliente/">Cientes</BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+            <BarItem>
+                <BarDropdown>
+                    <BarDropdownToggle>
+                        <BarIcon IconName="@("fa-power-off")"></BarIcon>
+                        Sesión
+                    </BarDropdownToggle>
+                    <BarDropdownMenu>
+                        <BarDropdownItem To="Identity/Account/Login">LogIn</BarDropdownItem>
+                        <BarDropdownItem To="Identity/Account/LogOut">LogOut</BarDropdownItem>
+                        <BarDropdownItem To="Identity/Account/Manage">
+                            <AuthorizeView>
+                                <Authorized>
+                                    <span class="fas fa-id-badge"></span><a href="Identity/Account/Manage"> <b>@context.User.Identity.Name</b></a>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <span class="fas fa-user-alt-slash"></span>
+                                </NotAuthorized>
+                            </AuthorizeView>
+
+                        </BarDropdownItem>
+                    </BarDropdownMenu>
+                </BarDropdown>
+            </BarItem>
+
+        </BarStart>
+
+    </BarMenu>
+</Bar>
+
+
+@code {
+    private bool siderVisible = true;
+
+    void ToggleSidebar()
+    {
+        siderVisible = !siderVisible;
+        StateHasChanged();
+    }
+
+
+
+}
+

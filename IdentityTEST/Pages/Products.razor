@@ -1,0 +1,595 @@
+﻿@page "/Product"
+@using Model
+@using Interfaces
+@inject IProductService ProductService
+@inject IBrandService BrandService
+@inject IOriginService OriginService
+@inject IVendorService VendorService
+@inject ICurrencyService CurrencyService
+@inject IStockService StockService
+@inject IStoreService StoreService
+@inject ITransferService TransferService
+@inject IEmployeeService EmployeeService
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+@attribute [Authorize]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs;
+@using Syncfusion.Blazor.Calendars;
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+
+@using System.IO
+
+
+<style>
+    .e-icons {
+        color: #ff0000;
+        font-size: 18px !important;
+    }
+
+    .e-transfer::before {
+        content: '\e890';
+    }
+</style>
+
+<style>
+    .e-card-image {
+        height: 200px;
+    }
+
+    .e-card {
+        width: 200px;
+        margin: auto;
+    }
+</style>
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-title" role="banner"><b>Productos</b></div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems" DataSource="@GridData" AllowExcelExport="true" ShowColumnChooser="true">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Product" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams">
+                            <HeaderTemplate>
+                                @{
+                                    var prod = (context as Product);
+                                    getProductStock(prod.id_producto);
+                                }
+                                <span>Detalle de Producto: @(prod.producto)</span>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var prod = (context as Product);
+                                }
+                                <div class="container-fluid">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(prod.id_producto)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-9">
+                                            <SfTextBox @bind-Value="@(prod.producto)" Enabled="true" Placeholder="Prodúcto" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+                                    <div class="from-row">
+                                        <div class="form-group col-md-12">
+                                            <SfCard ID="ProductCard">
+
+                                                <Syncfusion.Blazor.Cards.CardImage Image=@prod.imagen></Syncfusion.Blazor.Cards.CardImage>
+                                                <Syncfusion.Blazor.Cards.CardHeader Title=@prod.codigo SubTitle=@prod.producto />
+                                            </SfCard>
+                                        </div>
+                                    </div>
+                                    <div class="from-row">
+                                        <div class="form-group col-md-12">
+                                            <label class="col-form-label">Subir Imagen:</label>
+                                            <SfUploader ID="UploadFiles" AllowedExtensions=".png,.jpeg,.jpg">
+                                                <UploaderEvents ValueChange="onChange" OnRemove="onRemove"></UploaderEvents>
+                                                <UploaderTemplates>
+                                                    <Template Context="HttpContext">
+                                                        <table>
+                                                            <tr>
+                                                                <td>
+                                                                    <img class="upload-image" alt="Preview Image @(HttpContext.Name)"
+                                                                         src="@(files.Count >0 ? files.Where(item=>item.Name == HttpContext.Name)?.FirstOrDefault()?.Path : string.Empty)">
+                                                                </td>
+                                                                <td>
+                                                                    <div style="padding: 7px;">
+                                                                        <h5 title="@(HttpContext.Name)">@(HttpContext.Name)</h5>
+                                                                        <i>@(HttpContext.Size) Bytes</i>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                        <span class="e-icons e-file-remove-btn remove" id="removeIcon" title="Remove"></span>
+                                                        <span class="e-upload-icon e-icons e-file-remove-btn" title="Upload" id="iconUpload" @onclick="@uploadFile"></span>
+                                                    </Template>
+                                                </UploaderTemplates>
+                                            </SfUploader>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(prod.codigo)" Enabled="true" Placeholder="Código" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <SfTextBox @bind-Value="@(prod.descripcion)" Enabled="true" Placeholder="Descripción" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(prod.costo)" Enabled="true" Placeholder="Costo" FloatLabelType="FloatLabelType.Always"> </SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(prod.precio)" Enabled="true" Placeholder="Precio" FloatLabelType="FloatLabelType.Always"> </SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfDropDownList DataSource="@currencies"
+                                                            TItem="Currency"
+                                                            TValue="Int32"
+                                                            @bind-Value="@(prod.id_moneda)"
+                                                            Placeholder="Moneda"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Value="id_moneda" Text="moneda"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfDropDownList DataSource="@brands"
+                                                            TItem="Brand"
+                                                            TValue="Int32"
+                                                            @bind-Value="@(prod.id_marca)"
+                                                            Placeholder="Marca"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Value="id_marca" Text="marca"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfDropDownList DataSource="@vendors"
+                                                            TItem="Vendor"
+                                                            TValue="Int32?"
+                                                            @bind-Value="@(prod.id_proveedor)"
+                                                            Placeholder="Proveedor"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Text="proveedor" Value="id_proveedor"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <SfDropDownList DataSource="@origins"
+                                                            TItem="Origin"
+                                                            TValue="Int32"
+                                                            @bind-Value="@(prod.id_origen)"
+                                                            Placeholder="Origen"
+                                                            FloatLabelType="FloatLabelType.Always" AllowFiltering="true" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                                <DropDownListFieldSettings Text="origen" Value="id_origen"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5><b>Existencia del producto por depósito</b></h5>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <SfGrid ID="StockGrid" @ref="StockGrid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarStock" DataSource="@stock">
+                                                <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal">
+
+                                                </GridEditSettings>
+                                                <GridEvents OnActionBegin="OnStockBeginHandler" TValue="Stock" CommandClicked="OnCommandClicked"></GridEvents>
+                                                <GridColumns>
+
+                                                    <GridColumn Field=@nameof(Stock.id_stock) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+
+                                                    <GridColumn Field=@nameof(Stock.deposito) HeaderText="Depósito" Width="30">
+                                                        <EditTemplate Context="con">
+                                                            <SfDropDownList TValue="Int32" TItem="Store" @bind-Value="@((con as Stock).id_deposito)" Placeholder="Depósito" DataSource="@stores">
+                                                                <DropDownListFieldSettings Text="deposito" Value="id_deposito"></DropDownListFieldSettings>
+                                                            </SfDropDownList>
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(Stock.cantidad) HeaderText="Cantidad" Width="15"></GridColumn>
+                                                    <GridColumn HeaderText="Adm." Width="15">
+                                                        <GridCommandColumns>
+                                                            <GridCommandColumn Type="CommandButtonType.None" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-transfer", CssClass="e-flat" })" Title="Transferir"></GridCommandColumn>
+                                                            <GridCommandColumn Type="CommandButtonType.Edit" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-edit", CssClass="e-flat" })"></GridCommandColumn>
+                                                            <GridCommandColumn Type="CommandButtonType.Delete" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-delete", CssClass="e-flat" })"></GridCommandColumn>
+                                                            <GridCommandColumn Type="CommandButtonType.Save" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-save", CssClass="e-flat" })"></GridCommandColumn>
+                                                            <GridCommandColumn Type="CommandButtonType.Cancel" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-cancel-icon", CssClass="e-flat" })"></GridCommandColumn>
+                                                        </GridCommandColumns>
+
+                                                    </GridColumn>
+                                                </GridColumns>
+                                            </SfGrid>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Template>
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Product.id_producto) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Product.codigo) HeaderText="Código" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Product.producto) HeaderText="Producto" Width="30"></GridColumn>
+                            <GridColumn Field=@nameof(Product.proveedor) HeaderText="Proveedor" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Product.marca) HeaderText="Marca" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Product.costo) HeaderText="Costo" Visible="false" Width="10" Format="N2"></GridColumn>
+                            <GridColumn Field=@nameof(Product.precio) HeaderText="Precio" Width="10" Format="N2"></GridColumn>
+                            <GridColumn Field=@nameof(Product.origen) HeaderText="Origen" Visible="false" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Product.descripcion) HeaderText="Descripción" Visible="false" Width="10"></GridColumn>
+                            <GridColumn Field=@nameof(Product.dias_garantia) HeaderText="Garantía" Visible="false" Width="10"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+        <SfDialog ID="dialog" Width="600px" Height="400px" ShowCloseIcon="true" @bind-Visible="@isVisibleTransferDialog">
+            <DialogTemplates>
+                <Header>Transferencia entre bodegas</Header>
+                <Content>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-left"><b>#Traslado:</b> </div>
+                            </div>
+                            <div class="col-6">
+                                <SfNumericTextBox TValue="int" @bind-Value=@NroTransferencia Placeholder="Cantidad"></SfNumericTextBox>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-left"><b>Cantidad:</b> </div>
+                            </div>
+                            <div class="col-6">
+                                <SfNumericTextBox TValue="int" @bind-Value=@cantidad Placeholder="Cantidad"></SfNumericTextBox>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-left"><b>Retirado por:</b> </div>
+                            </div>
+                            <div class="col-6">
+                                <SfTextBox TValue="String" @bind-Value=@RetiradoPor Placeholder="Retirado por"></SfTextBox>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-left"><b>Observaciones:</b> </div>
+                            </div>
+                            <div class="col-6">
+                                <SfTextBox TValue="String" @bind-Value=@Observaciones Placeholder="Observaciones"></SfTextBox>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <SfGrid ID="DestinationGrid" @ref="DestinationGrid" DataSource="@destinations">
+                                <GridEditSettings AllowAdding="true" AllowEditing="true" Mode="EditMode.Normal">
+                                </GridEditSettings>
+                                <GridEvents OnActionBegin="OnStockBeginHandler" TValue="Stock" CommandClicked="OnDestinationCommandClicked"></GridEvents>
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(Stock.id_stock) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+                                    <GridColumn Field=@nameof(Stock.deposito) HeaderText="Depósito" Width="30">
+                                        <EditTemplate Context="con">
+                                            <SfDropDownList TValue="Int32" TItem="Store" @bind-Value="@((con as Stock).id_deposito)" Placeholder="Depósito" DataSource="@stores">
+                                                <DropDownListFieldSettings Text="deposito" Value="id_deposito"></DropDownListFieldSettings>
+                                            </SfDropDownList>
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(Stock.cantidad) HeaderText="Cantidad" Width="15"></GridColumn>
+                                    <GridColumn HeaderText="Adm." Width="10">
+                                        <GridCommandColumns>
+                                            <GridCommandColumn Type="CommandButtonType.None" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-transfer", CssClass="e-flat" })" Title="Transferir"></GridCommandColumn>
+                                        </GridCommandColumns>
+                                    </GridColumn>
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+                    </div>
+                </Content>
+            </DialogTemplates>
+
+        </SfDialog>
+
+    </div>
+
+</div>
+
+
+@code {
+    //public IEnumerable<Product> clients { get; set; }
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "ExcelExport", "Search", "ColumnChooser" };
+    public string[] ToolbarStock = new string[] { "Add", };
+
+    public string ErrorDetails = "";
+
+    public IEnumerable<Product> GridData { get; set; }
+    public IEnumerable<Brand> brands { get; set; }
+    public IEnumerable<Origin> origins { get; set; }
+    public IEnumerable<Vendor> vendors { get; set; }
+    public IEnumerable<Currency> currencies { get; set; }
+    public IEnumerable<Stock> stock { get; set; }
+    public IEnumerable<Store> stores { get; set; }
+    public IEnumerable<Stock> destinations { get; set; }
+
+    public Employee employee { get; set; }
+
+
+    public class fileInfo
+    {
+        public string Path { get; set; }
+        public string Name { get; set; }
+        public double Size { get; set; }
+    }
+
+    public MultipartFormDataContent content;
+    List<fileInfo> files = new List<fileInfo>();
+    public HttpResponseMessage filepath { get; set; }
+    public string responseStr;
+
+    SfGrid<Product> Grid { get; set; }
+    SfGrid<Stock> StockGrid { get; set; }
+    SfGrid<Stock> DestinationGrid { get; set; }
+
+    protected Stock originStock { get; set; }
+    protected Stock destinationStock { get; set; }
+
+    private DialogSettings DialogParams = new DialogSettings { Width = "940px", EnableResize = true, AllowDragging = true };
+    protected int IdProducto;
+    protected string CodigoProducto;
+
+    public int NroTransferencia;
+    public int cantidad;
+    public string RetiradoPor;
+    public string Observaciones;
+
+    public string UserName;
+
+    protected bool isVisibleTransferDialog = false;
+
+
+
+    public void onChange(UploadChangeEventArgs args)
+    {
+        files = new List<fileInfo>();
+        foreach (var file in args.Files)
+        {
+            var pathToSave = Path.Combine("C:\\Users\\cbalbuena\\source\\repos\\Lugaro\\IdentityTEST\\bin\\Release\\netcoreapp3.1\\publish\\wwwroot\\", "Images");
+            var fullPath = Path.Combine(pathToSave, CodigoProducto + ".jpg");
+            var tempPath = Path.Combine(pathToSave, file.FileInfo.Name);
+
+            //Cargo el objeto "content"
+            byte[] bytes = file.Stream.ToArray();
+            string base64 = Convert.ToBase64String(bytes);
+            files.Add(new fileInfo() { Path = @"data:image/" + file.FileInfo.Type + ";base64," + base64, Name = file.FileInfo.Name, Size = file.FileInfo.Size });
+            content = new MultipartFormDataContent {
+                    { new ByteArrayContent(file.Stream.GetBuffer()), "\"upload\"", file.FileInfo.Name }
+                };
+
+            //Escribo a disco las imagenes
+
+            FileStream filestream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
+            file.Stream.WriteTo(filestream);
+            filestream.Close();
+            file.Stream.Close();
+
+        }
+    }
+
+    public async Task uploadFile(MouseEventArgs args)
+    {
+        filepath = await ProductService.SaveImage(content);
+        this.responseStr = await filepath.Content.ReadAsStringAsync();
+    }
+
+    public void onRemove(RemovingEventArgs args)
+    {
+        foreach (var removeFile in args.FilesData)
+        {
+            if (File.Exists(Path.Combine(@"\Images", removeFile.Name)))
+            {
+                File.Delete(Path.Combine(@"\Images\", removeFile.Name));
+            }
+        }
+    }
+
+    public void getProductStock(int id)
+    {
+        var task = Task.Run<IEnumerable<Stock>>(async () => await StockService.GetProductStock(id));
+        stock = task.Result;
+    }
+
+    private void OpenTransferDialog()
+    {
+        isVisibleTransferDialog = true;
+
+    }
+
+    public void OnCommandClicked(CommandClickEventArgs<Stock> args)
+    {
+        var item = args.RowData;
+        originStock = item;
+        var command = args.CommandColumn;
+
+        if (command.Title == "Transferir")
+        {
+            cantidad = (int)item.cantidad;
+
+            var task = Task.Run<IEnumerable<Stock>>(async () => await StockService.GetTransferDestinations(item.id_stock));
+            destinations = task.Result;
+            OpenTransferDialog();
+        }
+
+    }
+
+    public void OnDestinationCommandClicked(CommandClickEventArgs<Stock> args)
+    {
+        var item = args.RowData;
+        destinationStock = item;
+        var command = args.CommandColumn;
+
+        if (command.Title == "Transferir")
+        {
+            originStock.cantidad = originStock.cantidad - cantidad;
+            destinationStock.cantidad = destinationStock.cantidad + cantidad;
+
+            Task.Run(async () => await StockService.SaveStock(originStock));
+            Task.Run(async () => await StockService.SaveStock(destinationStock));
+
+            //Registro la transferencia
+            Transfer t = new Transfer();
+            t.id_producto = originStock.id_producto;
+            t.fecha = DateTime.Now;
+            t.id_deposito_origen = originStock.id_deposito;
+            t.id_deposito_destino = destinationStock.id_deposito;
+            t.id_funcionario = employee.id_funcionario;
+            t.cantidad = cantidad;
+            t.nro_transferencia = NroTransferencia;
+            t.retirado_por = RetiradoPor;
+            t.observaciones = Observaciones;
+
+            Task.Run(async () => await TransferService.SaveTransfer(t));
+
+            isVisibleTransferDialog = false;
+        }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await ProductService.GetAllProducts();
+            brands = await BrandService.GetAllBrands();
+            origins = await OriginService.GetAllOrigins();
+            vendors = await VendorService.GetAllVendors();
+            currencies = await CurrencyService.GetAllCurrencies();
+            stores = await StoreService.GetAllStores();
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            string[] subs = user.Identity.Name.Split("@");
+            UserName = subs[0];
+
+            employee = await EmployeeService.GetEmployeeDetailsByUsername(UserName);
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener productos: " + ex.Message;
+        }
+    }
+
+
+
+    private async Task OnBeginHandler(ActionEventArgs<Product> Args)
+    {
+        try
+        {
+            IdProducto = ((Product)Args.Data).id_producto;
+            CodigoProducto = ((Product)Args.Data).codigo;
+        }
+        catch (Exception ex)
+        { }
+
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveProduct((Product)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteProduct(((Product)Args.Data).id_producto);
+        }
+
+
+        return;
+    }
+
+    private async Task OnStockBeginHandler(ActionEventArgs<Stock> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveStock((Stock)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteStock(((Stock)Args.Data).id_stock);
+        }
+
+        return;
+    }
+
+    protected async Task SaveStock(Stock stock)
+    {
+        stock.id_producto = IdProducto;
+        await StockService.SaveStock(stock);
+        Grid.Refresh();
+
+    }
+
+    protected async Task DeleteStock(int id)
+    {
+        await StockService.DeleteStock(id);
+        Grid.Refresh();
+
+    }
+
+    protected async Task SaveProduct(Product product)
+    {
+        await ProductService.SaveProduct(product);
+    }
+
+    protected async Task DeleteProduct(int id)
+    {
+        await ProductService.DeleteProduct(id);
+    }
+
+
+
+    public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "Grid_excelexport") //Id is combination of Grid's ID and itemname
+        {
+            ExcelExportProperties ExcelProperties = new ExcelExportProperties();
+            ExcelProperties.FileName = "Productos.xlsx";
+            await this.Grid.ExcelExport(ExcelProperties);
+        }
+
+    }
+}
+
+

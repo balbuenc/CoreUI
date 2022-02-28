@@ -1,0 +1,157 @@
+﻿@page "/Discounts"
+@using Model
+@using Interfaces
+@inject IDiscountService DiscountService
+
+
+@attribute [Authorize]
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using System.Collections.ObjectModel
+@inject NavigationManager NavigationManager
+
+@using Syncfusion.Blazor.Inputs;
+
+@using Syncfusion.Blazor.Buttons
+
+
+
+<div class="container-fluid">
+    <p>@Message</p>
+    <span class="error">@ErrorDetails</span>
+
+    <div class="col-lg-12" style="padding:1px; height:50px">
+        <div class="content-wrapper">
+            <div class="alert alert-primary" role="banner"><b>Descuentos</b></div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-12 control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                @if (GridData == null)
+                {
+                    <div class="alert alert-warning" role="alert"><p><em>Cargando datos...</em></p></div>
+                }
+                else
+                {
+                    <SfButton OnClick="ExcelExport" Content="Excel Export"></SfButton>
+                    <SfGrid ID="Grid" @ref="Grid" AllowPaging="true" AllowSorting="true" Toolbar="@ToolbarItems"  DataSource="@GridData" AllowExcelExport="true">
+
+                        <GridEvents OnActionBegin="OnBeginHandler" TValue="Discount"></GridEvents>
+                        <GridPageSettings PageSize="20"></GridPageSettings>
+
+                        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams">
+                            <HeaderTemplate>
+                                @{
+                                    var disc = (context as Discount);
+                                }
+                                <span>Detalle de Discounto: @(disc.descuento)</span>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var disc = (context as Discount);
+                                }
+                                <div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <SfNumericTextBox @bind-Value="@(disc.id_descuento)" Enabled="false" Placeholder="ID" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                                        </div>
+                                        <div class="form-group col-md-9">
+                                            <SfTextBox @bind-Value="@(disc.descuento)" Enabled="true" Placeholder="Descuento" FloatLabelType="FloatLabelType.Always"> </SfTextBox>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <SfNumericTextBox @bind-Value="@(disc.porcentaje)" Enabled="true" Placeholder="Porcentaje" FloatLabelType="FloatLabelType.Always"> </SfNumericTextBox>
+                                    </div>
+                                    
+                                </div>
+                            </Template>
+                        </GridEditSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Discount.id_descuento) HeaderText="ID" TextAlign="TextAlign.Center" Width="5" IsPrimaryKey="true"></GridColumn>
+                            <GridColumn Field=@nameof(Discount.descuento) HeaderText="Descuento" Width="20"></GridColumn>
+                            <GridColumn Field=@nameof(Discount.porcentaje) HeaderText="Porcentaje" Width="10"></GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                }
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+    //public IEnumerable<Discount> clients { get; set; }
+    public string Message { get; set; }
+    public string[] ToolbarItems = new string[] { "Add", "Edit", "Delete", "Update", "Cancel", "Search" };
+    public string ErrorDetails = "";
+
+    public IEnumerable<Discount> GridData { get; set; }
+
+
+
+
+    SfGrid<Discount> Grid { get; set; }
+
+    private DialogSettings DialogParams = new DialogSettings { Width = "850px", EnableResize = true, AllowDragging = true };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            GridData = await DiscountService.GetAllDiscounts();
+
+        }
+        catch (Exception ex)
+        {
+            Message = "Error al obtener descuentos: " + ex.Message;
+        }
+    }
+
+
+
+    private async Task OnBeginHandler(ActionEventArgs<Discount> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await SaveDiscount((Discount)Args.Data);
+        }
+        else if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await DeleteDiscount(((Discount)Args.Data).id_descuento);
+        }
+
+
+        return;
+    }
+
+    protected async Task SaveDiscount(Discount product)
+    {
+        await DiscountService.SaveDiscount(product);
+    }
+
+    protected async Task DeleteDiscount(int id)
+    {
+        await DiscountService.DeleteDiscount(id);
+    }
+
+    public async Task ExcelExport()
+    {
+        ExcelExportProperties ExportProperties = new ExcelExportProperties();
+        ExportProperties.IncludeHiddenColumn = true;
+        await this.Grid.ExcelExport(ExportProperties);
+    }
+
+
+}
+
+

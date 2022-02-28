@@ -1,0 +1,66 @@
+﻿@page "/"
+@attribute [Authorize]
+@using CoreERP.UI.Tools
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+
+
+<Jumbotron Background="Background.Transparent" Margin="Margin.Is4.FromBottom">
+    <span class="error">@ErrorDetails</span>
+    <JumbotronSubtitle>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-2 my-auto">
+                <img src="@imagePath" style="width:40%" />
+            </div>
+        </div>
+    </JumbotronSubtitle>
+    <Divider></Divider>
+    <Paragraph>
+        <h2 style="color:dodgerblue"><b>CoreERP v1.0</b></h2>
+        <p></p>
+        <p>Sistema  de gestión corporativo, basado en microservicios.</p>
+        <p style="color:black"><b>Powered by ITCS</b></p>
+    </Paragraph>
+
+</Jumbotron>
+
+@code
+{
+    private SystemTools erpTools;
+    private String mainURL;
+    private String mainLogo;
+    private string ErrorDetails;
+    private string imagePath;
+    private IConfiguration configuration;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            erpTools = new SystemTools();
+
+            //Get System configuration
+            mainURL = await erpTools.GetSystemParam("BaseURL");
+            mainLogo = await erpTools.GetSystemParam("MainLogo");
+
+            imagePath = mainURL + mainLogo;
+        }
+        catch (Exception ex)
+        {
+            ErrorDetails = "Error al obtener configuracion del sistema: " + ex.Message;
+        }
+    }
+
+
+    //public HtmlString GetLogoImagePath
+    //{
+    //    get
+    //    {
+    //        string imagePath;
+    //        imagePath = mainURL + mainLogo;
+    //        return new HtmlString(!string.IsNullOrEmpty(imagePath) ? imagePath : string.Empty);
+    //    }
+    //}
+
+}
