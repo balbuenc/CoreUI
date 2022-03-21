@@ -388,7 +388,7 @@
         files = new List<fileInfo>();
         foreach (var file in args.Files)
         {
-            var pathToSave = Path.Combine("\\", "Images");
+            var pathToSave = Path.Combine("/opt/app-root/src/IdentityTEST/wwwroot/Images", "Images");
             var fullPath = Path.Combine(pathToSave, CodigoProducto + ".jpg");
             var tempPath = Path.Combine(pathToSave, file.FileInfo.Name);
 
