@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "98aa8ad0-ac26-4721-af95-f9e47cc9c54b": {
+      "ProjectGuid": "98aa8ad0-ac26-4721-af95-f9e47cc9c54b",
+      "DisplayName": "CoreERP.UI",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
